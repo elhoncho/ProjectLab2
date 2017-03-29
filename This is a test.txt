@@ -1,4 +1,8 @@
 test one
 test two
 test three
+<<<<<<< HEAD
 test five
+=======
+test four
+>>>>>>> master
