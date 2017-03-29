@@ -1,8 +1,4 @@
 test one
 test two
 test three
-<<<<<<< HEAD
-test four
-=======
-test two
->>>>>>> origin/master
+Hello!
