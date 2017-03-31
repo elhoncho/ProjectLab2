@@ -25,23 +25,26 @@
 
 #define RX_STRING_LENGTH 50
 
+
 static const char SERVER_IP[] = "10.0.0.7";
 
-static int connected = FALSE;
-
-static int state = 0;
-static int txState = 0;
 static int returnState = 0;
-static int reconnectState = 0;
 
-static char inputString[RX_STRING_LENGTH] = "";
-static char txData[RX_STRING_LENGTH] = "";
-static char tmpString[RX_STRING_LENGTH] = "";
-static char tmpNumber[10] = "";
-static char tmpInputString[RX_STRING_LENGTH] = "";
+//static char tmpInputString[RX_STRING_LENGTH] = "";
 
 static volatile char inChar;
+
+struct ringBuffer{
+    volatile int head;
+    int tail;
+    volatile char buffer[RX_STRING_LENGTH];
+};
+
+static struct ringBuffer inBuffer;
+
 static void SerialWrite(char *TxArray);
+static int pushToBuffer(struct ringBuffer *b, const char inChar);
+static int popFromBuffer(struct ringBuffer *b, char *outChar);
 
 void WifiSetup(){
     WDTCTL = WDTPW | WDTHOLD;   // Stop watchdog timer
@@ -68,48 +71,79 @@ void WifiSetup(){
     IE2 |= UCA0RXIE; // Enable USCI_A0 RX interrupt
 
     __bis_SR_register(GIE); //Interrupts enabled
+
+    inBuffer.head = 0;
+    inBuffer.tail = 0;
 }
 
 void WifiLoop(){
 
+
+    static int connected = FALSE;
+
+    static int state = 0;
+    static int txState = 0;
+    static int reconnectState = 0;
+
+    static char inputString[RX_STRING_LENGTH] = "";
+    static char parseBuffer[RX_STRING_LENGTH] = "";
+    static char txData[RX_STRING_LENGTH] = "";
+    static char tmpString[RX_STRING_LENGTH] = "";
+    static char tmpNumber[10] = "";
+
+    char outChar;
+
+
     ////////////////////////////////////////////////////////////
     //                  Parse the input string                //
     ////////////////////////////////////////////////////////////
-    if(endsWith(tmpInputString, "\n")){
-        //Remove the \r\n from the command
-        strcpy(inputString, tmpInputString);
-        trimString(inputString);
-        //memset(tmpInputString, 0, strlen(tmpInputString));
-        tmpInputString[0] = '\0';
-
-        if(strncmp(inputString,"ready",5) == 0){
-            state = 0;
-            txState = 0;
-            returnState = 0;
-            connected = FALSE;
-            reconnectState = 0;
-    //        memset(inputString, 0, strlen(inputString));
-            inputString[0] = '\0';
-        }
-        else if(strncmp(inputString,"CLOSED",6) == 0 && connected){
-            state = RECONNECT;
-            connected = FALSE;
-            reconnectState = 0;
-    //        memset(inputString, 0, strlen(inputString));
-            inputString[0] = '\0';
-        }
-        else if(strncmp(tmpInputString,"+IPD",4)== 0){
-            trimString(tmpInputString);
-            strcpy(inputString, tmpInputString);
-            tmpInputString[0] = '\0';
-        }
-        else if(strncmp(inputString,"busy s...",9) == 0){
-            //Retransmit
-    //        memset(inputString, 0, strlen(inputString));
-            inputString[0] = '\0';
-        }
 
 
+
+    if(popFromBuffer(&inBuffer, &outChar) == 0){
+        int len = strlen(parseBuffer);
+
+        if(len < RX_STRING_LENGTH-1){
+            parseBuffer[len] = outChar;
+            parseBuffer[len+1] = '\0';
+        }
+        //TODO: What to do about overflows from +IPD
+        else if(len == RX_STRING_LENGTH-1){
+            parseBuffer[0] = '\0';
+        }
+
+        if(outChar == '\n'){
+            //Remove the \r\n from the command
+            trimString(parseBuffer);
+            strcpy(inputString, parseBuffer);
+            parseBuffer[0] = '\0';
+
+            //Could have junk from boot or overflow +IPD on the string so check ending for ready
+            //TODO: need to make a different buffer that holds just the last 5 chars to find ready because it could fill
+            //the buffer during ready being written and wont see the input but only during init becasue if a message has
+            //ready in it it could break it
+            if(endsWith(inputString,"ready")){
+                state = 0;
+                txState = 0;
+                returnState = 0;
+                connected = FALSE;
+                reconnectState = 0;
+                memset(inputString, 0, sizeof(inputString));
+//                inputString[0] = '\0';
+            }
+            else if(endsWith(inputString,"CLOSED") && connected){
+                state = RECONNECT;
+                connected = FALSE;
+                reconnectState = 0;
+//                memset(inputString, 0, strlen(inputString));
+                inputString[0] = '\0';
+            }
+            else if(endsWith(inputString,"busy s...")){
+                //Retransmit
+//               memset(inputString, 0, strlen(inputString));
+                inputString[0] = '\0';
+            }
+        }
     }
 
 //////////////////////////////////////////////////////////////////////////
@@ -121,16 +155,114 @@ void WifiLoop(){
 //                memset(inputString, 0, strlen(inputString));
                 inputString[0] = '\0';
             }
-        break;
-        case RX_DATA:
-            if(strncmp(inputString,"+IPD",4) == 0){
-                //-3 for /r /n and /0
-                strncpy(txData, strchr(inputString, ':')+1,RX_STRING_LENGTH-3);
-                state = TX_DATA;
-//                memset(inputString, 0, strlen(inputString));
+            else if(strncmp(inputString,"WIFI CONNECTED",14) == 0){
                 inputString[0] = '\0';
+                inputString[1] = '\0';
             }
-        break;
+            break;
+        case RX_DATA:
+            if(strncmp(parseBuffer,"+IPD,",5) == 0){
+                char rxStr[5] = "";
+                int rxAmmount = 0;
+
+                char *strPtr = strchr(parseBuffer, ':');
+
+                if(strPtr != NULL){
+                    parseBuffer[0] = '\0';
+                    strncpy(rxStr, &parseBuffer[5], strPtr-&parseBuffer[5]);
+                    itoa(rxAmmount, rxStr,10);
+
+                    if(rxAmmount >= 1000){
+                       strcpy(txData, "Major Overflow");
+                       state = TX_DATA;
+                       txState = TX_SETUP;
+                       parseBuffer[0] = '\0';
+                       return;
+                    }
+                }
+                else if(parseBuffer[5] != '\0' && strPtr == NULL){
+                    //Weird case where it has received only part of the string to send but not the : yet
+                    strcpy(rxStr, &parseBuffer[5]);
+                    parseBuffer[0] = '\0';
+                    while(rxAmmount == 0){
+                       if(inBuffer.head != inBuffer.tail){
+                           popFromBuffer(&inBuffer, &outChar);
+                           int rxStrLen = strlen(rxStr);
+                           if(outChar == ':'){
+                               rxAmmount = atoi(rxStr);
+                               if(rxAmmount == 1){
+                                   strcpy(txData, "No Data");
+                                   state = TX_DATA;
+                                   txState = TX_SETUP;
+                                   return;
+                               }
+                           }
+                           else if(rxStrLen < 3){
+                               rxStr[rxStrLen] = outChar;
+                               rxStr[rxStrLen+1] = '\0';
+                           }
+                           else{
+                               strcpy(txData, "Major Overflow");
+                               state = TX_DATA;
+                               txState = TX_SETUP;
+                               parseBuffer[0] = '\0';
+                               return;
+                           }
+                        }
+                    }
+                }
+                else{
+                    while(rxAmmount == 0){
+                       if(inBuffer.head != inBuffer.tail){
+                           popFromBuffer(&inBuffer, &outChar);
+                           int rxStrLen = strlen(rxStr);
+                           if(outChar == ':'){
+                               rxAmmount = atoi(rxStr);
+                               if(rxAmmount == 1){
+                                   strcpy(txData, "No Data");
+                                   state = TX_DATA;
+                                   txState = TX_SETUP;
+                                   return;
+                               }
+                           }
+                           else if(rxStrLen < 3){
+                               rxStr[rxStrLen] = outChar;
+                               rxStr[rxStrLen+1] = '\0';
+                           }
+                           else{
+                               strcpy(txData, "Major Overflow");
+                               state = TX_DATA;
+                               txState = TX_SETUP;
+                               parseBuffer[0] = '\0';
+                               return;
+                           }
+                        }
+                    }
+                }
+
+                if(rxAmmount <= RX_STRING_LENGTH){
+                    int count = 0;
+                    txData[0] = '\0';
+                    //TODO: Could get stuck here if transmission gets garbled
+                    while(count < rxAmmount){
+                        if(inBuffer.head != inBuffer.tail){
+                            popFromBuffer(&inBuffer, &outChar);
+                            count++;
+                            int tmpLen = strlen(txData);
+                            txData[tmpLen] = outChar;
+                            txData[tmpLen + 1] = '\0';
+                        }
+                    }
+                    state = TX_DATA;
+                    txState = TX_SETUP;
+                }
+                else{
+                    strcpy(txData, "Overflow");
+                    state = TX_DATA;
+                    txState = TX_SETUP;
+                }
+            }
+            break;
         case TX_DATA:
             switch(txState){
                 case TX_SETUP:
@@ -142,10 +274,10 @@ void WifiLoop(){
                         SerialWrite(tmpString);
                         txState = TX_VALIDATE;
                     }
-                    else{
-                        strcpy(txData,"ERROR: No data");
-                        txState = TX_SETUP;
-                    }
+//                    else{
+//                        strcpy(txData,"ERROR: No data");
+//                        txState = TX_SETUP;
+//                    }
                     break;
                 case TX_VALIDATE:
                     if(strncmp(inputString,"OK",2) == 0){
@@ -168,16 +300,16 @@ void WifiLoop(){
                     if(inChar == '>'){
                         SerialWrite(txData);
                         txState = TX_VALIDATE_SEND;
-//                        memset(txData, 0, strlen(txData));
-                        inputString[0] = '\0';
+                        memset(txData, 0, strlen(txData));
+//                        inputString[0] = '\0';
                     }
                     break;
                 case TX_VALIDATE_SEND:
                         if(strncmp(inputString,"SEND OK",7) == 0){
                             txState = TX_SETUP;
                             state = RX_DATA;
-//                            memset(inputString, 0, strlen(inputString));
-                            inputString[0] = '\0';
+                            memset(inputString, 0, strlen(inputString));
+//                            inputString[0] = '\0';
                         }
                     break;
                 default:
@@ -204,10 +336,9 @@ void WifiLoop(){
                     }
                     //TODO: WIFI GOT IP some how passes the strcmp with CLOSED
                     else if(strcmp(inputString,"CLOSED") == 0){
-                        int i = strcmp(inputString, "CLOSED");
-                        char tmpChar = inputString[i+1];
-                        if(tmpChar == 'j')
-                            reconnectState = 1;
+                        if(inputString[1] == 'I'){
+                            state = 0;
+                        }
                         reconnectState = RC_CONNECT;
 //                        memset(inputString, 0, strlen(inputString));
                         inputString[0] = '\0';
@@ -231,25 +362,52 @@ static void SerialWrite(char *TxArray){
     }
 }
 
+static int pushToBuffer(struct ringBuffer *b, const char inChar){
+    if(b->head == RX_STRING_LENGTH-1){
+        b->head = 0;
+    }
+    else{
+        b->head++;
+    }
+
+    if(b->head != b->tail){
+        b->buffer[b->head] = inChar;
+        return 0;
+    }
+    else{
+        b->head--;
+        return -1;
+    }
+}
+
+static int popFromBuffer(struct ringBuffer *b, char *outChar){
+    if(b->tail != b->head){
+        if(b->tail == RX_STRING_LENGTH-1){
+            b->tail = 0;
+        }
+        else{
+            b->tail++;
+        }
+
+        *outChar = b->buffer[b->tail];
+        return 0;
+    }
+    else{
+        //Head equals tail, therefore nothing on the buffer
+        return -1;
+    }
+}
 
 void __attribute__((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR(void)
 {
     inChar = UCA0RXBUF;
 
-    int len = strlen(tmpInputString);
+//    int len = strlen(tmpInputString);
 
     //Check to make sure inputString isnt overflown and that the char is an ASCII char
-    if((len < RX_STRING_LENGTH-1) && ((inChar & ~0x7F) == 0) && (inChar != '\0')){
-        tmpInputString[len] = inChar;
-        tmpInputString[len+1] = '\0';
-    }
-
-    if(len == RX_STRING_LENGTH-1){
-        if(strncmp(tmpInputString,"+IPD",4)== 0){
-            strcpy(txData, "Overflow");
-            state = TX_DATA;
-        }
-        //memset(tmpInputString, 0, len);
-        tmpInputString[0] = '\0';
+    if(((inChar & ~0x7F) == 0) && (inChar != '\0')){
+//        tmpInputString[len] = inChar;
+//        tmpInputString[len+1] = '\0';
+        pushToBuffer(&inBuffer, inChar);
     }
 }
