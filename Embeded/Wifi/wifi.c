@@ -1,3 +1,10 @@
+/*******************************************************************/
+/* Things to do                                                    */
+/*     Will get a double overflow message on large overflows       */
+/*     Debug that weird case marked below                          */
+/*     Need to have a fail safe to break from the while loops      */
+/*******************************************************************/
+
 #include <msp430.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,11 +33,9 @@
 #define RX_STRING_LENGTH 50
 
 
-static const char SERVER_IP[] = "10.0.0.7";
+static const char SERVER_IP[] = "10.0.0.6";
 
 static int returnState = 0;
-
-//static char tmpInputString[RX_STRING_LENGTH] = "";
 
 static volatile char inChar;
 
@@ -78,8 +83,11 @@ void WifiSetup(){
 
 void WifiLoop(){
 
+    char outChar;
 
     static int connected = FALSE;
+    static int sendComplete = TRUE;
+    static int overflow = FALSE;
 
     static int state = 0;
     static int txState = 0;
@@ -89,16 +97,13 @@ void WifiLoop(){
     static char parseBuffer[RX_STRING_LENGTH] = "";
     static char txData[RX_STRING_LENGTH] = "";
     static char tmpString[RX_STRING_LENGTH] = "";
-    static char tmpNumber[10] = "";
-
-    char outChar;
 
 
     ////////////////////////////////////////////////////////////
     //                  Parse the input string                //
     ////////////////////////////////////////////////////////////
 
-
+    inputString[0] = 0;
 
     if(popFromBuffer(&inBuffer, &outChar) == 0){
         int len = strlen(parseBuffer);
@@ -107,43 +112,68 @@ void WifiLoop(){
             parseBuffer[len] = outChar;
             parseBuffer[len+1] = '\0';
         }
-        //TODO: What to do about overflows from +IPD
         else if(len == RX_STRING_LENGTH-1){
-            parseBuffer[0] = '\0';
+            parseBuffer[0] = parseBuffer[1];
+            for(int i = 1; i < RX_STRING_LENGTH-2; i++){
+                parseBuffer[i] = parseBuffer[i+1];
+            }
+            parseBuffer[RX_STRING_LENGTH-2] = outChar;
+            parseBuffer[RX_STRING_LENGTH-1] = '\0';
         }
 
-        if(outChar == '\n'){
-            //Remove the \r\n from the command
-            trimString(parseBuffer);
-            strcpy(inputString, parseBuffer);
-            parseBuffer[0] = '\0';
 
-            //Could have junk from boot or overflow +IPD on the string so check ending for ready
-            //TODO: need to make a different buffer that holds just the last 5 chars to find ready because it could fill
-            //the buffer during ready being written and wont see the input but only during init becasue if a message has
-            //ready in it it could break it
-            if(endsWith(inputString,"ready")){
-                state = 0;
-                txState = 0;
-                returnState = 0;
-                connected = FALSE;
-                reconnectState = 0;
-                memset(inputString, 0, sizeof(inputString));
-//                inputString[0] = '\0';
+        //TODO: "SEND FAIL" is another posibility if the sending is jacked up some how
+        if(endsWith(parseBuffer,"ready")){
+            strcpy(inputString, "ready");
+
+            state = 0;
+            txState = 0;
+            returnState = 0;
+            connected = FALSE;
+            reconnectState = 0;
+        }
+
+        else if(endsWith(parseBuffer,"CLOSED\r\n") && connected){
+            strcpy(inputString, "CLOSED");
+
+            state = RECONNECT;
+            connected = FALSE;
+            reconnectState = 0;
+        }
+        else if(endsWith(parseBuffer,"CLOSED\r\n")){
+            strcpy(inputString, "CLOSED");
+        }
+        //Careful of the other message "OK"
+        else if(endsWith(parseBuffer,"SEND OK\r\n")){
+            strcpy(inputString, "SEND OK");
+        }
+        else if(endsWith(parseBuffer, "OK\r\n")){
+            strcpy(inputString, "OK");
+        }
+        else if(endsWith(parseBuffer,"+IPD,")){
+            if(sendComplete && overflow == FALSE){
+                strcpy(inputString, "+IPD,");
+                state = RX_DATA;
             }
-            else if(endsWith(inputString,"CLOSED") && connected){
-                state = RECONNECT;
-                connected = FALSE;
-                reconnectState = 0;
-//                memset(inputString, 0, strlen(inputString));
-                inputString[0] = '\0';
-            }
-            else if(endsWith(inputString,"busy s...")){
-                //Retransmit
-//               memset(inputString, 0, strlen(inputString));
-                inputString[0] = '\0';
+            else{
+                overflow = TRUE;
+//                parseBuffer[RX_STRING_LENGTH-2] = '\0';
             }
         }
+        else if(endsWith(parseBuffer,"busy s...\r\n")){
+            strcpy(inputString, "busy s...");
+        }
+        else if(endsWith(parseBuffer,"WIFI GOT IP\r\n")){
+            strcpy(inputString, "WIFI GOT IP");
+        }
+        else if(endsWith(parseBuffer,"WIFI CONNECTED\r\n")){
+            strcpy(inputString, "WIFI CONNECTED");
+        }
+
+        else if(endsWith(parseBuffer,"ERROR\r\n")){
+            strcpy(inputString, "ERROR");
+        }
+
     }
 
 //////////////////////////////////////////////////////////////////////////
@@ -157,109 +187,105 @@ void WifiLoop(){
             }
             else if(strncmp(inputString,"WIFI CONNECTED",14) == 0){
                 inputString[0] = '\0';
-                inputString[1] = '\0';
             }
             break;
         case RX_DATA:
-            if(strncmp(parseBuffer,"+IPD,",5) == 0){
-                char rxStr[5] = "";
-                int rxAmmount = 0;
+            if(overflow == TRUE){
+                strcpy(txData,"Overflow");
+                state = TX_DATA;
+                txState = TX_SETUP;
+                overflow = FALSE;
+            }
+            else{
+                if(strncmp(inputString,"+IPD,",5) == 0){
+                    char rxStr[5] = "";
+                    int rxAmmount = 0;
 
-                char *strPtr = strchr(parseBuffer, ':');
+                    char *strPtr = strchr(inputString, ':');
 
-                if(strPtr != NULL){
-                    parseBuffer[0] = '\0';
-                    strncpy(rxStr, &parseBuffer[5], strPtr-&parseBuffer[5]);
-                    itoa(rxAmmount, rxStr,10);
+                    if(strPtr != NULL){
+                        inputString[0] = '\0';
+                        strncpy(rxStr, &inputString[5], strPtr-&inputString[5]);
+                        itoa(rxAmmount, rxStr,10);
 
-                    if(rxAmmount >= 1000){
-                       strcpy(txData, "Major Overflow");
-                       state = TX_DATA;
-                       txState = TX_SETUP;
-                       parseBuffer[0] = '\0';
-                       return;
+                        if(rxAmmount >= 1000){
+                            overflow = TRUE;
+                           return;
+                        }
                     }
-                }
-                else if(parseBuffer[5] != '\0' && strPtr == NULL){
-                    //Weird case where it has received only part of the string to send but not the : yet
-                    strcpy(rxStr, &parseBuffer[5]);
-                    parseBuffer[0] = '\0';
-                    while(rxAmmount == 0){
-                       if(inBuffer.head != inBuffer.tail){
-                           popFromBuffer(&inBuffer, &outChar);
-                           int rxStrLen = strlen(rxStr);
-                           if(outChar == ':'){
-                               rxAmmount = atoi(rxStr);
-                               if(rxAmmount == 1){
-                                   strcpy(txData, "No Data");
-                                   state = TX_DATA;
-                                   txState = TX_SETUP;
+                    else if(inputString[5] != '\0' && strPtr == NULL){
+                        inputString[0] = '\0';
+                        //TODO: Don't know if this works, weird case where it has received only part of the string to send but not the : yet
+                        strcpy(rxStr, &inputString[5]);
+                        while(rxAmmount == 0){
+                           if(inBuffer.head != inBuffer.tail){
+                               popFromBuffer(&inBuffer, &outChar);
+                               int rxStrLen = strlen(rxStr);
+                               if(outChar == ':'){
+                                   rxAmmount = atoi(rxStr);
+                                   if(rxAmmount == 1){
+                                       strcpy(txData, "No Data");
+                                       state = TX_DATA;
+                                       txState = TX_SETUP;
+                                       return;
+                                   }
+                               }
+                               else if(rxStrLen < 3){
+                                   rxStr[rxStrLen] = outChar;
+                                   rxStr[rxStrLen+1] = '\0';
+                               }
+                               else{
+                                   overflow = TRUE;
                                    return;
                                }
-                           }
-                           else if(rxStrLen < 3){
-                               rxStr[rxStrLen] = outChar;
-                               rxStr[rxStrLen+1] = '\0';
-                           }
-                           else{
-                               strcpy(txData, "Major Overflow");
-                               state = TX_DATA;
-                               txState = TX_SETUP;
-                               parseBuffer[0] = '\0';
-                               return;
-                           }
+                            }
                         }
                     }
-                }
-                else{
-                    while(rxAmmount == 0){
-                       if(inBuffer.head != inBuffer.tail){
-                           popFromBuffer(&inBuffer, &outChar);
-                           int rxStrLen = strlen(rxStr);
-                           if(outChar == ':'){
-                               rxAmmount = atoi(rxStr);
-                               if(rxAmmount == 1){
-                                   strcpy(txData, "No Data");
-                                   state = TX_DATA;
-                                   txState = TX_SETUP;
+                    else{
+                        while(rxAmmount == 0){
+                           if(inBuffer.head != inBuffer.tail){
+                               popFromBuffer(&inBuffer, &outChar);
+                               int rxStrLen = strlen(rxStr);
+                               if(outChar == ':'){
+                                   rxAmmount = atoi(rxStr);
+                                   if(rxAmmount == 1){
+                                       strcpy(txData, "No Data");
+                                       state = TX_DATA;
+                                       txState = TX_SETUP;
+                                       return;
+                                   }
+                               }
+                               else if(rxStrLen < 3){
+                                   rxStr[rxStrLen] = outChar;
+                                   rxStr[rxStrLen+1] = '\0';
+                               }
+                               else{
+                                   overflow = TRUE;
                                    return;
                                }
-                           }
-                           else if(rxStrLen < 3){
-                               rxStr[rxStrLen] = outChar;
-                               rxStr[rxStrLen+1] = '\0';
-                           }
-                           else{
-                               strcpy(txData, "Major Overflow");
-                               state = TX_DATA;
-                               txState = TX_SETUP;
-                               parseBuffer[0] = '\0';
-                               return;
-                           }
+                            }
                         }
                     }
-                }
 
-                if(rxAmmount <= RX_STRING_LENGTH){
-                    int count = 0;
-                    txData[0] = '\0';
-                    //TODO: Could get stuck here if transmission gets garbled
-                    while(count < rxAmmount){
-                        if(inBuffer.head != inBuffer.tail){
-                            popFromBuffer(&inBuffer, &outChar);
-                            count++;
-                            int tmpLen = strlen(txData);
-                            txData[tmpLen] = outChar;
-                            txData[tmpLen + 1] = '\0';
+                    if(rxAmmount <= RX_STRING_LENGTH){
+                        int count = 0;
+                        txData[0] = '\0';
+                        //TODO: Could get stuck here if transmission gets garbled
+                        while(count < rxAmmount){
+                            if(inBuffer.head != inBuffer.tail){
+                                popFromBuffer(&inBuffer, &outChar);
+                                count++;
+                                int tmpLen = strlen(txData);
+                                txData[tmpLen] = outChar;
+                                txData[tmpLen + 1] = '\0';
+                            }
                         }
+                        state = TX_DATA;
+                        txState = TX_SETUP;
                     }
-                    state = TX_DATA;
-                    txState = TX_SETUP;
-                }
-                else{
-                    strcpy(txData, "Overflow");
-                    state = TX_DATA;
-                    txState = TX_SETUP;
+                    else{
+                        overflow = TRUE;
+                    }
                 }
             }
             break;
@@ -267,17 +293,15 @@ void WifiLoop(){
             switch(txState){
                 case TX_SETUP:
                     if(strlen(txData) > 0){
+                        static char tmpNumber[10];
                         strcpy(tmpString, "AT+CIPSEND=");
                         itoa(strlen(txData),tmpNumber,10);
                         strcat(tmpString, tmpNumber);
                         strcat(tmpString, "\r\n");
                         SerialWrite(tmpString);
                         txState = TX_VALIDATE;
+                        sendComplete = FALSE;
                     }
-//                    else{
-//                        strcpy(txData,"ERROR: No data");
-//                        txState = TX_SETUP;
-//                    }
                     break;
                 case TX_VALIDATE:
                     if(strncmp(inputString,"OK",2) == 0){
@@ -285,31 +309,43 @@ void WifiLoop(){
 //                        memset(inputString, 0, strlen(inputString));
                         inputString[0] = '\0';
                     }
-                    else if(strncmp(inputString,"busy s...",9) == 0){
-                        txState = TX_SETUP;
-//                        memset(inputString, 0, strlen(inputString));
-                        inputString[0] = '\0';
-                    }
                     else if(strncmp(inputString,"ERROR",5) == 0){
                         txState = TX_SETUP;
 //                        memset(inputString, 0, strlen(inputString));
                         inputString[0] = '\0';
+
                     }
+//                    else if(strncmp(inputString,"busy s...",9) == 0){
+//                        txState = TX_SETUP;
+////                        memset(inputString, 0, strlen(inputString));
+//                        inputString[0] = '\0';
+//                    }
+
                     break;
                 case TX_SEND:
                     if(inChar == '>'){
                         SerialWrite(txData);
                         txState = TX_VALIDATE_SEND;
-                        memset(txData, 0, strlen(txData));
-//                        inputString[0] = '\0';
+                        inputString[0] = '\0';
                     }
                     break;
                 case TX_VALIDATE_SEND:
                         if(strncmp(inputString,"SEND OK",7) == 0){
                             txState = TX_SETUP;
                             state = RX_DATA;
-                            memset(inputString, 0, strlen(inputString));
-//                            inputString[0] = '\0';
+                            sendComplete = TRUE;
+//                            memset(inputString, 0, strlen(inputString));
+                            inputString[0] = '\0';
+
+                            if(overflow == TRUE){
+                                strcpy(txData,"Overflow");
+                                state = TX_DATA;
+                                txState = TX_SETUP;
+                                overflow = FALSE;
+                            }
+                        }
+                        else if(strncmp(inputString,"SEND FAIL",9) == 0){
+                            //TODO: Do something here
                         }
                     break;
                 default:
@@ -323,7 +359,6 @@ void WifiLoop(){
                     strcat(tmpString, SERVER_IP);
                     strcat(tmpString, "\",80\r\n");
                     reconnectState = RC_VERIFY;
-                    //Must be the last thing called, it will jump out and modify the state
                     SerialWrite(tmpString);
                     break;
                 case RC_VERIFY:
@@ -334,7 +369,6 @@ void WifiLoop(){
 //                        memset(inputString, 0, strlen(inputString));
                         inputString[0] = '\0';
                     }
-                    //TODO: WIFI GOT IP some how passes the strcmp with CLOSED
                     else if(strcmp(inputString,"CLOSED") == 0){
                         if(inputString[1] == 'I'){
                             state = 0;
@@ -355,10 +389,10 @@ void WifiLoop(){
 
 static void SerialWrite(char *TxArray){
     unsigned char ArrayLength = strlen(TxArray);
-    while(ArrayLength--){ // Loop until StringLength == 0 and post decrement
-        while(!(IFG2 & UCA0TXIFG)); // Wait for TX buffer to be ready for new data
-        UCA0TXBUF = *TxArray; //Write the character at the location specified py the pointer
-        TxArray++; //Increment the TxString pointer to point to the next character
+    while(ArrayLength--){
+        while(!(IFG2 & UCA0TXIFG));
+        UCA0TXBUF = *TxArray;
+        TxArray++;
     }
 }
 
@@ -402,12 +436,8 @@ void __attribute__((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR(void)
 {
     inChar = UCA0RXBUF;
 
-//    int len = strlen(tmpInputString);
-
-    //Check to make sure inputString isnt overflown and that the char is an ASCII char
+    //Check to make sure inputString is an ASCII char and not null
     if(((inChar & ~0x7F) == 0) && (inChar != '\0')){
-//        tmpInputString[len] = inChar;
-//        tmpInputString[len+1] = '\0';
         pushToBuffer(&inBuffer, inChar);
     }
 }
