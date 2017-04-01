@@ -1,6 +1,6 @@
 /*******************************************************************/
 /* Things to do                                                    */
-/*     Will get a double overflow message on large overflows       */
+/*     Reset if not connected after 30 sec                         */
 /*     Debug that weird case marked below                          */
 /*     Need to have a fail safe to break from the while loops      */
 /*******************************************************************/
@@ -157,7 +157,6 @@ void WifiLoop(){
             }
             else{
                 overflow = TRUE;
-//                parseBuffer[RX_STRING_LENGTH-2] = '\0';
             }
         }
         else if(endsWith(parseBuffer,"busy s...\r\n")){
@@ -201,69 +200,27 @@ void WifiLoop(){
                     char rxStr[5] = "";
                     int rxAmmount = 0;
 
-                    char *strPtr = strchr(inputString, ':');
-
-                    if(strPtr != NULL){
-                        inputString[0] = '\0';
-                        strncpy(rxStr, &inputString[5], strPtr-&inputString[5]);
-                        itoa(rxAmmount, rxStr,10);
-
-                        if(rxAmmount >= 1000){
-                            overflow = TRUE;
-                           return;
-                        }
-                    }
-                    else if(inputString[5] != '\0' && strPtr == NULL){
-                        inputString[0] = '\0';
-                        //TODO: Don't know if this works, weird case where it has received only part of the string to send but not the : yet
-                        strcpy(rxStr, &inputString[5]);
-                        while(rxAmmount == 0){
-                           if(inBuffer.head != inBuffer.tail){
-                               popFromBuffer(&inBuffer, &outChar);
-                               int rxStrLen = strlen(rxStr);
-                               if(outChar == ':'){
-                                   rxAmmount = atoi(rxStr);
-                                   if(rxAmmount == 1){
-                                       strcpy(txData, "No Data");
-                                       state = TX_DATA;
-                                       txState = TX_SETUP;
-                                       return;
-                                   }
-                               }
-                               else if(rxStrLen < 3){
-                                   rxStr[rxStrLen] = outChar;
-                                   rxStr[rxStrLen+1] = '\0';
-                               }
-                               else{
-                                   overflow = TRUE;
+                    while(rxAmmount == 0){
+                       if(inBuffer.head != inBuffer.tail){
+                           popFromBuffer(&inBuffer, &outChar);
+                           int rxStrLen = strlen(rxStr);
+                           if(outChar == ':'){
+                               rxAmmount = atoi(rxStr);
+                               if(rxAmmount == 1){
+                                   strcpy(txData, "No Data");
+                                   state = TX_DATA;
+                                   txState = TX_SETUP;
                                    return;
                                }
-                            }
-                        }
-                    }
-                    else{
-                        while(rxAmmount == 0){
-                           if(inBuffer.head != inBuffer.tail){
-                               popFromBuffer(&inBuffer, &outChar);
-                               int rxStrLen = strlen(rxStr);
-                               if(outChar == ':'){
-                                   rxAmmount = atoi(rxStr);
-                                   if(rxAmmount == 1){
-                                       strcpy(txData, "No Data");
-                                       state = TX_DATA;
-                                       txState = TX_SETUP;
-                                       return;
-                                   }
-                               }
-                               else if(rxStrLen < 3){
-                                   rxStr[rxStrLen] = outChar;
-                                   rxStr[rxStrLen+1] = '\0';
-                               }
-                               else{
-                                   overflow = TRUE;
-                                   return;
-                               }
-                            }
+                           }
+                           else if(rxStrLen < 3){
+                               rxStr[rxStrLen] = outChar;
+                               rxStr[rxStrLen+1] = '\0';
+                           }
+                           else{
+                               overflow = TRUE;
+                               return;
+                           }
                         }
                     }
 
@@ -338,10 +295,18 @@ void WifiLoop(){
                             inputString[0] = '\0';
 
                             if(overflow == TRUE){
-                                strcpy(txData,"Overflow");
-                                state = TX_DATA;
-                                txState = TX_SETUP;
+
                                 overflow = FALSE;
+
+                                if(strncmp(txData,"Overflow",8) == 0){
+                                    state = RX_DATA;
+                                    txState = TX_SETUP;
+                                }
+                                else{
+                                    strcpy(txData,"Overflow");
+                                    state = TX_DATA;
+                                    txState = TX_SETUP;
+                                }
                             }
                         }
                         else if(strncmp(inputString,"SEND FAIL",9) == 0){
@@ -377,6 +342,7 @@ void WifiLoop(){
 //                        memset(inputString, 0, strlen(inputString));
                         inputString[0] = '\0';
                     }
+                    //TODO: Should also be posible to get an "ERROR" message here if transmission gets garbled
                     break;
                 default:
                     break;
