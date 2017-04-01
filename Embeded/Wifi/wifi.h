@@ -12,5 +12,7 @@
 
     void WifiSetup();
     void WifiLoop();
+    long TimeSinceBoot();
+    int SendData(char *Data);
 
 #endif /* WIFI_H_ */

@@ -1,7 +1,6 @@
 /*******************************************************************/
 /* Things to do                                                    */
 /*     Reset if not connected after 30 sec                         */
-/*     Debug that weird case marked below                          */
 /*     Need to have a fail safe to break from the while loops      */
 /*******************************************************************/
 
@@ -32,20 +31,21 @@
 
 #define RX_STRING_LENGTH 50
 
-
-static const char SERVER_IP[] = "10.0.0.6";
-
-static int returnState = 0;
-
-static volatile char inChar;
-
 struct ringBuffer{
     volatile int head;
     int tail;
     volatile char buffer[RX_STRING_LENGTH];
 };
 
+
 static struct ringBuffer inBuffer;
+static const char SERVER_IP[] = "10.0.0.6";
+static volatile int state = 0;
+static volatile int txState = 0;
+static volatile char inChar;
+static volatile unsigned long msSinceBoot = 0;
+static volatile char txData[RX_STRING_LENGTH] = "";
+
 
 static void SerialWrite(char *TxArray);
 static int pushToBuffer(struct ringBuffer *b, const char inChar);
@@ -59,8 +59,14 @@ void WifiSetup(){
     BCSCTL1 = CALBC1_16MHZ; // Set DCO to 16MHz
     DCOCTL = CALDCO_16MHZ; // Set DCO to 16MHz
 
+    //Turn all of port 2 to outputs and set them to low
     P2DIR |= 0XFF;
     P2OUT &= 0X00;
+
+    //Setup timer A
+    CCTL0 = CCIE;                             // CCR0 interrupt enabled
+    TACTL = TASSEL_2 + MC_1 + ID_3;           // SMCLK/8, upmode
+    CCR0 =  20000;                            // 1ms between interrupts
 
     /* Configure hardware UART */
     P1SEL |= BIT1 + BIT2 ; // P1.1 = RXD, P1.2=TXD
@@ -89,13 +95,10 @@ void WifiLoop(){
     static int sendComplete = TRUE;
     static int overflow = FALSE;
 
-    static int state = 0;
-    static int txState = 0;
     static int reconnectState = 0;
 
     static char inputString[RX_STRING_LENGTH] = "";
     static char parseBuffer[RX_STRING_LENGTH] = "";
-    static char txData[RX_STRING_LENGTH] = "";
     static char tmpString[RX_STRING_LENGTH] = "";
 
 
@@ -128,7 +131,6 @@ void WifiLoop(){
 
             state = 0;
             txState = 0;
-            returnState = 0;
             connected = FALSE;
             reconnectState = 0;
         }
@@ -353,6 +355,27 @@ void WifiLoop(){
     }
 }
 
+long TimeSinceBoot(){
+    return msSinceBoot;
+}
+
+int SendData(char *Data){
+    if(state == RX_DATA){
+        if(strlen(Data) < RX_STRING_LENGTH - 1){
+            strcpy(txData, Data);
+            state = TX_DATA;
+            txState = TX_SETUP;
+            return 0;
+        }
+        else{
+            return -1;
+        }
+    }
+    else{
+        return -1;
+    }
+}
+
 static void SerialWrite(char *TxArray){
     unsigned char ArrayLength = strlen(TxArray);
     while(ArrayLength--){
@@ -406,4 +429,9 @@ void __attribute__((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR(void)
     if(((inChar & ~0x7F) == 0) && (inChar != '\0')){
         pushToBuffer(&inBuffer, inChar);
     }
+}
+
+void __attribute__((interrupt(TIMER0_A0_VECTOR))) TIMER_A_ISR(void)
+{
+    msSinceBoot++;
 }
