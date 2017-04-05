@@ -1,13 +1,3 @@
-var express = require('express')
-var app = express()
-
-app.use(express.static('../Pages/DemoPage/'))
-
-
-app.listen(80, function () {
-  console.log('Server is listening on port 80!')
-})
-
 // Load the TCP Library
 net = require('net');
 
@@ -16,6 +6,14 @@ var clients = [];
 
 // Start a TCP Server
 net.createServer(function (socket) {
+
+  socket.on("error",  function(exception){
+    console.log("Error: "+exception.message);
+    if(exception.message == "read ECONNRESET"){
+      clients.splice(clients.indexOf(socket), 1);
+      broadcast(socket.name + " left in a rude way :(\n");
+    }
+  });
 
   // Identify this client
   socket.name = socket.remoteAddress + ":" + socket.remotePort 

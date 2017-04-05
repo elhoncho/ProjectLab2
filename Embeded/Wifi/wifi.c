@@ -2,6 +2,9 @@
 /* Things to do                                                    */
 /*     Reset if not connected after 30 sec                         */
 /*     Need to have a fail safe to break from the while loops      */
+/*     Delay reconnects so you dont spam the router                */
+/*     Need to add a check to make sure that it is still connected */
+/*        incase the CLOSED dosent get read                        */
 /*******************************************************************/
 
 #include <msp430.h>
@@ -32,8 +35,8 @@
 #define RX_STRING_LENGTH 50
 
 struct ringBuffer{
-    volatile int head;
-    int tail;
+    volatile unsigned int head;
+    volatile unsigned int tail;
     volatile char buffer[RX_STRING_LENGTH];
 };
 
@@ -133,6 +136,12 @@ void WifiLoop(){
             txState = 0;
             connected = FALSE;
             reconnectState = 0;
+
+            inBuffer.head = 0;
+            inBuffer.tail = 0;
+
+            overflow = FALSE;
+            sendComplete = TRUE;
         }
 
         else if(endsWith(parseBuffer,"CLOSED\r\n") && connected){
@@ -324,7 +333,7 @@ void WifiLoop(){
                 case RC_CONNECT:
                     strcpy(tmpString, "AT+CIPSTART=\"TCP\",\"");
                     strcat(tmpString, SERVER_IP);
-                    strcat(tmpString, "\",80\r\n");
+                    strcat(tmpString, "\",5000\r\n");
                     reconnectState = RC_VERIFY;
                     SerialWrite(tmpString);
                     break;
