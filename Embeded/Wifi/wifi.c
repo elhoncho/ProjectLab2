@@ -32,7 +32,14 @@
 #define RC_CONNECT 0
 #define RC_VERIFY 1
 
-#define RX_STRING_LENGTH 50
+//Length of string to ESP, has to have more than the MAX_TX_DATA because of the string AT_CIPSTART="TCP","xxx.xxx.xxx.xxx",xxxxx/r/n and a /0 => 44 chars
+#define TX_STRING_LENGTH 44
+
+//Max amount of characters to buffer on the rx
+#define RX_STRING_LENGTH 20
+
+//Max amount of characters the user is allowed to send, this must be lower than TX_STRING_LENGTH by 8 characters because of the string +IPD,xx:
+#define MAX_TX_DATA 15
 
 struct ringBuffer{
     volatile unsigned int head;
@@ -47,7 +54,7 @@ static volatile int state = 0;
 static volatile int txState = 0;
 static volatile char inChar;
 static volatile unsigned long msSinceBoot = 0;
-static volatile char txData[RX_STRING_LENGTH] = "";
+static volatile char txData[TX_STRING_LENGTH] = "";
 
 
 static void SerialWrite(char *TxArray);
@@ -102,7 +109,7 @@ void WifiLoop(){
 
     static char inputString[RX_STRING_LENGTH] = "";
     static char parseBuffer[RX_STRING_LENGTH] = "";
-    static char tmpString[RX_STRING_LENGTH] = "";
+    char txTmpString[TX_STRING_LENGTH] = "";
 
 
     ////////////////////////////////////////////////////////////
@@ -262,11 +269,11 @@ void WifiLoop(){
                 case TX_SETUP:
                     if(strlen(txData) > 0){
                         static char tmpNumber[10];
-                        strcpy(tmpString, "AT+CIPSEND=");
+                        strcpy(txTmpString, "AT+CIPSEND=");
                         itoa(strlen(txData),tmpNumber,10);
-                        strcat(tmpString, tmpNumber);
-                        strcat(tmpString, "\r\n");
-                        SerialWrite(tmpString);
+                        strcat(txTmpString, tmpNumber);
+                        strcat(txTmpString, "\r\n");
+                        SerialWrite(txTmpString);
                         txState = TX_VALIDATE;
                         sendComplete = FALSE;
                     }
@@ -331,11 +338,11 @@ void WifiLoop(){
         case RECONNECT:
             switch(reconnectState){
                 case RC_CONNECT:
-                    strcpy(tmpString, "AT+CIPSTART=\"TCP\",\"");
-                    strcat(tmpString, SERVER_IP);
-                    strcat(tmpString, "\",5000\r\n");
+                    strcpy(txTmpString, "AT+CIPSTART=\"TCP\",\"");
+                    strcat(txTmpString, SERVER_IP);
+                    strcat(txTmpString, "\",5000\r\n");
                     reconnectState = RC_VERIFY;
-                    SerialWrite(tmpString);
+                    SerialWrite(txTmpString);
                     break;
                 case RC_VERIFY:
                     if(strncmp(inputString,"OK",2) == 0){
@@ -370,7 +377,7 @@ long TimeSinceBoot(){
 
 int SendData(char *Data){
     if(state == RX_DATA){
-        if(strlen(Data) < RX_STRING_LENGTH - 1){
+        if(strlen(Data) < MAX_TX_DATA){
             strcpy(txData, Data);
             state = TX_DATA;
             txState = TX_SETUP;
