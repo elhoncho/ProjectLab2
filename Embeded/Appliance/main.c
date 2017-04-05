@@ -22,6 +22,9 @@ int main(void) {
             strcat(tmpStr, "\r\n");
             SendData(tmpStr);
         }
+        if(NewData() == 0){
+            SendData(rxData);
+        }
     }
 	return 0;
 }

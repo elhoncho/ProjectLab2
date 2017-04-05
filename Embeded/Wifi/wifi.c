@@ -55,6 +55,8 @@ static volatile int txState = 0;
 static volatile char inChar;
 static volatile unsigned long msSinceBoot = 0;
 static volatile char txData[TX_STRING_LENGTH] = "";
+static volatile int newRxData = FALSE;
+volatile char rxData[RX_STRING_LENGTH] = "";
 
 
 static void SerialWrite(char *TxArray);
@@ -244,19 +246,19 @@ void WifiLoop(){
 
                     if(rxAmmount <= RX_STRING_LENGTH){
                         int count = 0;
-                        txData[0] = '\0';
+                        rxData[0] = '\0';
                         //TODO: Could get stuck here if transmission gets garbled
                         while(count < rxAmmount){
                             if(inBuffer.head != inBuffer.tail){
                                 popFromBuffer(&inBuffer, &outChar);
                                 count++;
-                                int tmpLen = strlen(txData);
-                                txData[tmpLen] = outChar;
-                                txData[tmpLen + 1] = '\0';
+                                int tmpLen = strlen(rxData);
+                                rxData[tmpLen] = outChar;
+                                rxData[tmpLen + 1] = '\0';
                             }
                         }
-                        state = TX_DATA;
-                        txState = TX_SETUP;
+                        inputString[0] = '/0';
+                        newRxData = TRUE;
                     }
                     else{
                         overflow = TRUE;
@@ -389,6 +391,16 @@ int SendData(char *Data){
     }
     else{
         return -1;
+    }
+}
+
+int NewData(){
+    if(newRxData == FALSE){
+        return -1;
+    }
+    else{
+        newRxData = FALSE;
+        return 0;
     }
 }
 

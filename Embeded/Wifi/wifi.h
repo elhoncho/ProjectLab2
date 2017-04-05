@@ -14,5 +14,7 @@
     void WifiLoop();
     long TimeSinceBoot();
     int SendData(char *Data);
+    volatile char rxData[];
+    int NewData();
 
 #endif /* WIFI_H_ */
