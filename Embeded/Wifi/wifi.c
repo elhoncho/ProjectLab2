@@ -49,7 +49,7 @@ struct ringBuffer{
 
 
 static struct ringBuffer inBuffer;
-static const char SERVER_IP[] = "10.0.0.12";
+static const char SERVER_IP[] = "192.168.1.10";
 static volatile int state = 0;
 static volatile int txState = 0;
 static volatile char inChar;

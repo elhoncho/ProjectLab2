@@ -14,7 +14,8 @@ int main(void) {
     char cooling = '0';
     char fan = '0';
 
-    P1DIR |= BIT0;
+    P1DIR |= BIT3+BIT4+BIT5;
+    P1OUT = 0;
 
     while(1){
         WifiLoop();
@@ -22,23 +23,29 @@ int main(void) {
             if(strncmp(rxData, "AC|", 3) == 0){
                 if(rxData[3] == '0'){
                     heating = rxData[3];
+                    P1OUT &= ~BIT3;
                 }
                 else if(rxData[3] == '1'){
                     heating = rxData[3];
+                    P1OUT |= BIT3;
                 }
 
                 if(rxData[5] == '0'){
                     cooling = rxData[5];
+                    P1OUT &= ~BIT4;
                 }
                 else if(rxData[5] == '1'){
                     cooling = rxData[5];
+                    P1OUT |= BIT4;
                 }
 
                 if(rxData[7] == '0'){
                     fan = rxData[7];
+                    P1OUT &= ~BIT5;
                 }
                 else if(rxData[7] == '1'){
                     fan = rxData[7];
+                    P1OUT |= BIT5;
                 }
 
                 char tmpStr[9] = "AC|0|0|0";
@@ -48,12 +55,6 @@ int main(void) {
 
                 SendData(tmpStr);
             }
-        }
-        if(heating == '1'){
-            P1OUT = BIT0;
-        }
-        else{
-            P1OUT = !BIT0;
         }
 //        if(TimeSinceBoot() > timer+100){
 //            timer = TimeSinceBoot();
