@@ -29,7 +29,7 @@
 <div class="row">
 	<div class="col-md-4">
 		<button class="btn btn-defalut" onclick="playFireAlarm()">Fire Alarm</button>
-		<button class="btn btn-primary btn-lg">Secondar</button>
+		<button class="btn btn-primary btn-lg" id="sendBtn" type="submit">Secondar</button>
 		<button class="btn btn-success" onclick="playDoorBell()">Door Bell</button>
 		<div id="slider"></div>
 
@@ -118,4 +118,12 @@
 	}
 </script>	
 
-
+<script src="/socket.io/socket.io.js"></script>
+<script>
+$(document).ready(function() {
+	var socket = io();
+    $("#sendBtn").click(function(){
+    	socket.emit('HVAC', "AC|1|0|0");
+    }); 
+});
+</script>
