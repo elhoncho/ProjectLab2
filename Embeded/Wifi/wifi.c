@@ -78,7 +78,7 @@ void WifiSetup(){
     //Setup timer A
     CCTL0 = CCIE;                             // CCR0 interrupt enabled
     TACTL = TASSEL_2 + MC_1 + ID_3;           // SMCLK/8, upmode
-    CCR0 =  2000;                            // 1ms between interrupts
+    CCR0 =  200;                            // .1ms between interrupts
 
     /* Configure hardware UART */
     P1SEL |= BIT1 + BIT2 ; // P1.1 = RXD, P1.2=TXD
