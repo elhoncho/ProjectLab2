@@ -11,10 +11,9 @@ int main(void) {
     long timer = 0;
 
     char appliance = '0';
-    char cooling = '0';
-    char fan = '0';
 
-    P1DIR |= BIT0;
+    P1DIR |= BIT3;
+    P1OUT = 0;
 
     while(1){
         WifiLoop();
@@ -22,9 +21,11 @@ int main(void) {
             if(strncmp(rxData, "AP|", 3) == 0){
                 if(rxData[3] == '0'){
                     appliance = rxData[3];
+                    P1OUT &= !BIT3;
                 }
                 else if(rxData[3] == '1'){
                     appliance = rxData[3];
+                    P1OUT |= BIT3;
                 }
 
                 char tmpStr[9] = "AP|0";
@@ -32,12 +33,6 @@ int main(void) {
 
                 SendData(tmpStr);
             }
-        }
-        if(appliance == '1'){
-            P1OUT = BIT0;
-        }
-        else{
-            P1OUT = !BIT0;
         }
     }
 	return 0;
