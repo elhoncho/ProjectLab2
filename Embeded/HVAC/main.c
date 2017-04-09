@@ -15,7 +15,7 @@ int main(void) {
     char fan = '0';
 
     P2DIR |= BIT3+BIT4+BIT5;
-    P1OUT = 0;
+    P2OUT = 0;
 
     while(1){
         WifiLoop();
@@ -56,17 +56,6 @@ int main(void) {
                 SendData(tmpStr);
             }
         }
-//        if(TimeSinceBoot() > timer+100){
-//            timer = TimeSinceBoot();
-//            P1OUT ^= BIT0;
-//
-//            char tmpStr[20] = "Time: ";
-//            char tmpNum[10] = "";
-//            strcat(tmpStr, itoa((int)TimeSinceBoot(), tmpNum, 10));
-//            strcat(tmpStr, "\r\n");
-//            SendData(tmpStr);
-//        }
-
     }
     return 0;
 }

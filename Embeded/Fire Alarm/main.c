@@ -2,42 +2,59 @@
 #include <wifi.h>
 #include <string.h>
 
-#define RedLed  (0x01u)    //%00000001 O port pin position P1.0
-#define fAlarm (0x10u)    //%00001000 I port pin position P1.4
-#define GreenLed (0x40u)   //%01000000 O port pin position P1.6
+#define IDLE 0
+#define SEND_ALARM 1
+#define ALARM_SENT 2
+#define SEND_CLEAR 3
+
+volatile int state = IDLE;
 
 int main(void) {
+
+    P2REN |= BIT3;               // Enable internal pull-up/down resistors
+    P2OUT |= BIT3;                   //Select pull-up mode for P1.4
+    P2IE |= BIT3;                       // P1.4 interrupt enabled
+    P2IES &= ~BIT3;                     // P1.4 rising edge
+    P2IFG &= ~BIT3;                  // P1.4 IFG cleared
+
+
     WifiSetup();
-    P1DIR |= (RedLed+GreenLed); //1.0, 1.6 as outputs
-    //P1REN = (fAlarm);          //resister enable for P1.4
-    P1OUT &= ~(RedLed+GreenLed); //set to 0
-    //P1IE |= (fAlarm);           //interrupt enabled
-    //P1IES |=(fAlarm);           //hi/lo edge
-    //P1IFG &= ~(fAlarm);         //P1.4 IFG cleared
-    //__enable_interrupt();
+
     while(1)
     {
           WifiLoop();
-          if((fAlarm & P1IN)  ==(0x10u))  //Case MDetect ON
-          {
-                P1OUT |= (RedLed); // Toggle Green LED ON
-              //  txData="FA|1"
-          }
-          else //Case OFF
-          {
-                P1OUT &= ~ (RedLed); // Toggle Green LED OFF
-              //  txData="FA|0"
-          }
-          //SendData(txData);
 
+          switch(state){
+              case IDLE:
+
+              break;
+              case SEND_ALARM:
+                  if(SendData("MD|1") == 0){
+                      state = ALARM_SENT;
+                  }
+                  break;
+              case ALARM_SENT:
+                  break;
+              case SEND_CLEAR:
+                  if(SendData("MD|0") == 0){
+                      state = IDLE;
+                  }
+              break;
+          }
     }
     return 0;
 }
-/*
-void __attribute__((interrupt(PORT1_VECTOR))) PORT_1(void)
+
+void __attribute__((interrupt(PORT2_VECTOR))) Port_2(void)
 {
-    P1OUT ^=(RedLed);
-    P1IFG &= ~ (fAlarm);
-   // txData="FA|1";
+   if(state == IDLE){
+       state = SEND_ALARM;
+       P2IES |= BIT3;
+   }
+   else if(state == ALARM_SENT){
+       state = SEND_CLEAR;
+       P2IES &= ~BIT3; //set to falling edge trigger
+   }
+
+   P2IFG &=~BIT3;                        // P1.3 IFG cleared
 }
-*/

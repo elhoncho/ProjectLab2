@@ -29,12 +29,28 @@ http.listen(3000, function(){
 
 io.on('connection', function(socket){
 	console.log('a user connected');	
+	
 	socket.on('HVAC', function(msg){
     	console.log('message: ' + msg);
     	clients.forEach(function (client) {
       		client.write(msg);
     	});
   	});
+
+	socket.on('Appliance', function(msg){
+    	console.log('message: ' + msg);
+    	clients.forEach(function (client) {
+      		client.write(msg);
+    	});
+  	});
+
+
+	socket.on('Lighting', function(msg){
+    	console.log('message: ' + msg);
+    	clients.forEach(function (client) {
+      		client.write(msg);
+	});
+	});
 })
 
 
@@ -56,6 +72,7 @@ net.createServer(function (socket) {
 
   // Handle incoming messages from clients.
   socket.on('data', function (data) {
+    console.log(data.toString());
     //broadcast(socket.name + "> " + data, socket);
   });
 
