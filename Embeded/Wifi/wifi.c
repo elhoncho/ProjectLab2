@@ -71,9 +71,7 @@ void WifiSetup(){
     BCSCTL1 = CALBC1_16MHZ; // Set DCO to 16MHz
     DCOCTL = CALDCO_16MHZ; // Set DCO to 16MHz
 
-    //Turn all of port 2 to outputs and set them to low
-    P2DIR |= 0XFF;
-    P2OUT &= 0X00;
+
 
     //Setup timer A
     CCTL0 = CCIE;                             // CCR0 interrupt enabled

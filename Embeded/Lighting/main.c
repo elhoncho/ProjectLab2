@@ -18,21 +18,19 @@ volatile int state = 0;
 int delayTime = 65;
 int onTime = 10;
 volatile long triggerTime = 0;
-volatile long lastTime = 0;
 
 int main(void) {
     long timer = 0;
 
       WifiSetup();
 
-      P1OUT &= 0x00;               // Shut down everything
-      P1DIR &= 0x00;
-      P1DIR |= BIT0+BIT5;            // P1.0 and P1.5 pins output the rest are input
-      P1REN |= BIT4;                   // Enable internal pull-up/down resistors
-      P1OUT |= BIT4;                   //Select pull-up mode for P1.4
-      P1IE |= BIT4;                       // P1.4 interrupt enabled
-      P1IES &= ~BIT4;                     // P1.4 rising edge
-      P1IFG &= ~BIT4;                  // P1.4 IFG cleared
+      P2OUT &= 0x00;               // Shut down everything
+      P2DIR &= 0x00;
+      P2DIR |= BIT0+BIT4;            // P2.4 pins output the rest are input
+      P2OUT |= BIT3;                   //Select pull-up mode for P2.3
+      P2IE |= BIT3;                       // P2.3 interrupt enabled
+      P2IES &= ~BIT3;                     // P2.3 rising edge
+      P2IFG &= ~BIT3;                  // P2.3 IFG cleared
 
     while(1){
         WifiLoop();
@@ -58,20 +56,18 @@ int main(void) {
         }
         switch(state){
             case IDLE:
-                //P1OUT &= ~BIT5;
                 break;
             case DELAY:
                 if(TimeSinceBoot() >= triggerTime){
                     state = TRIGGER_OFF;
-                    lastTime = timer;
                     triggerTime = TimeSinceBoot()+onTime;
-                    P1OUT |= BIT5;
+                    P2OUT |= BIT4;
                 }
                 break;
             case TRIGGER_OFF:
                 if(TimeSinceBoot() >= triggerTime){
                     state = IDLE;
-                    P1OUT &= ~BIT5;
+                    P2OUT &= ~BIT4;
                 }
                 break;
         }
@@ -79,14 +75,11 @@ int main(void) {
     return 0;
 }
 
-void __attribute__((interrupt(PORT1_VECTOR))) Port_1(void)
+void __attribute__((interrupt(PORT2_VECTOR))) Port_2(void)
 {
-    //TODO: Remove this var, it is just for testing
-    lastTime = triggerTime;
     triggerTime = TimeSinceBoot() + delayTime;
     state = DELAY;
-    P1OUT &= ~BIT5;
+    P2OUT &= ~BIT4;
 
-   P1OUT ^= BIT0;
-   P1IFG &=~BIT4;                        // P1.4 IFG cleared
+    P2IFG &=~BIT3;                        // P2.3 IFG cleared
 }

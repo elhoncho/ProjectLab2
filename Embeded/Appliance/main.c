@@ -12,8 +12,8 @@ int main(void) {
 
     char appliance = '0';
 
-    P1DIR |= BIT3;
-    P1OUT = 0;
+    P2DIR |= BIT3;
+    P2OUT = 0;
 
     while(1){
         WifiLoop();
@@ -21,11 +21,11 @@ int main(void) {
             if(strncmp(rxData, "AP|", 3) == 0){
                 if(rxData[3] == '0'){
                     appliance = rxData[3];
-                    P1OUT &= !BIT3;
+                    P2OUT &= !BIT3;
                 }
                 else if(rxData[3] == '1'){
                     appliance = rxData[3];
-                    P1OUT |= BIT3;
+                    P2OUT |= BIT3;
                 }
 
                 char tmpStr[9] = "AP|0";
