@@ -15,7 +15,7 @@ app.use("/css", express.static(__dirname + '/css'));
 app.use("/fonts", express.static(__dirname + '/fonts'));
 app.use("/images", express.static(__dirname + '/images'));
 app.use("/js", express.static(__dirname + '/js'));
-app.use(express.static('../Pages/HVAC/'));
+app.use(express.static('../Pages/HomeAutomation/'));
 
 
 app.get('/', function(req, res){
