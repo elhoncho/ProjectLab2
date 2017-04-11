@@ -12,4 +12,8 @@ $(document).ready(function() {
     $("#Three").click(function(){
         $("#content").load("/Lighting.html");
     });
+
+    $('.nav a').on('click', function(){
+        $('.navbar-toggle').click()
+    });
 });
