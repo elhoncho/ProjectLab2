@@ -51,6 +51,13 @@ io.on('connection', function(socket){
       		client.write(msg);
 	});
 	});
+	
+		socket.on('Video Monitoring', function(msg){
+    	console.log('message: ' + msg);
+    	clients.forEach(function (client) {
+      		client.write(msg);
+	});
+	});
 })
 
 

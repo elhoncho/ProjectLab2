@@ -35,10 +35,12 @@ int main(void) {
                   }
                   break;
               case ALARM_SENT:
+                  /*
                   if(P2IN & BIT3){
                        state = SEND_CLEAR;
                        P2IES |= BIT3;
                   }
+                  */
                   break;
               case SEND_CLEAR:
                   if(SendData("FA|0") == 0){
