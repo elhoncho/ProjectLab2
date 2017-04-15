@@ -38,7 +38,7 @@ int main(void) {
             if(strncmp(rxData, "LI|", 3) == 0){
                 char tmpStr[9] = "";
                 int tmpNum = 0;
-                strcpy(tmpStr, &rxData[3]);
+                strncpy(tmpStr, &rxData[3], 2);
                 tmpNum = atoi(tmpStr);
 
                 if(tmpNum >= MAX_DELAY){
@@ -51,7 +51,11 @@ int main(void) {
                     delayTime = tmpNum;
                 }
 
-               SendData(rxData);
+               char tmpNumStr[3] = "00";
+               strcpy(tmpStr, "LI|");
+               itoa(delayTime, tmpNumStr, 10);
+               strcat(tmpStr, tmpNumStr);
+               SendData(tmpStr);
             }
         }
         switch(state){
