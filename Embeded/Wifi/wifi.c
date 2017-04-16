@@ -49,7 +49,7 @@ struct ringBuffer{
 
 
 static struct ringBuffer inBuffer;
-static const char SERVER_IP[] = "192.168.1.10";
+static const char SERVER_IP[] = "10.0.0.3";
 static volatile int state = 0;
 static volatile int txState = 0;
 static volatile char inChar;
@@ -62,6 +62,7 @@ volatile char rxData[RX_STRING_LENGTH] = "";
 static void SerialWrite(char *TxArray);
 static int pushToBuffer(struct ringBuffer *b, const char inChar);
 static int popFromBuffer(struct ringBuffer *b, char *outChar);
+int toInt(char *strToInt);
 
 void WifiSetup(){
     WDTCTL = WDTPW | WDTHOLD;   // Stop watchdog timer
@@ -223,9 +224,11 @@ void WifiLoop(){
                            popFromBuffer(&inBuffer, &outChar);
                            int rxStrLen = strlen(rxStr);
                            if(outChar == ':'){
-                               rxAmmount = atoi(rxStr);
-                               if(rxAmmount == 1){
-                                   strcpy(txData, "No Data");
+                               rxAmmount = toInt(rxStr);
+                               //atoi has bugs and eventually fails
+                               //rxAmmount = atoi(rxStr);
+                               if(rxAmmount == -1){
+                                   strcpy(txData, "Error Parsing Length");
                                    state = TX_DATA;
                                    txState = TX_SETUP;
                                    return;
@@ -447,6 +450,12 @@ static int popFromBuffer(struct ringBuffer *b, char *outChar){
     }
 }
 
+int toInt(char *strToInt){
+    if(strlen(strToInt) == 1){
+        return (int)strToInt[0] - 48;
+    }
+    return -1;
+}
 void __attribute__((interrupt(USCIAB0RX_VECTOR))) USCI0RX_ISR(void)
 {
     inChar = UCA0RXBUF;
