@@ -12,6 +12,10 @@ $(document).ready(function() {
     $("#Three").click(function(){
         $("#content").load("/Lighting.html");
     });
+	
+    $("#Four").click(function(){
+        $("#content").load("/Video.html");
+    });
 
     $('.nav a').on('click', function(){
         $('.navbar-toggle').click()
