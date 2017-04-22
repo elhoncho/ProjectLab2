@@ -2,7 +2,7 @@ $(document).ready(function() {
 	var socket = io();
 	var appliance = "0";
     var lastTxTime = 0;
-    var txDelay = 0;
+    var txDelay = 250;
     var sliderUpdate = false;
 
     $("#low").click(function(){
