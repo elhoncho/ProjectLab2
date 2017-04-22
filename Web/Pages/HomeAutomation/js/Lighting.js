@@ -2,8 +2,8 @@ $(document).ready(function() {
 	var socket = io();
 	var appliance = "0";
     var lastTxTime = 0;
-    var txDelay = 500;
-    var sliderUpdate = true;
+    var txDelay = 0;
+    var sliderUpdate = false;
 
     $("#low").click(function(){
 	   if(Date.now() - lastTxTime > txDelay){
@@ -48,7 +48,7 @@ $(document).ready(function() {
             lastTxTime = Date.now();
             sliderUpdate = false;
         }
-    }, 500);
+    }, txDelay);
 
 
 });
