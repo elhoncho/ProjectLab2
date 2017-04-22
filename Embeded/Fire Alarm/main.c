@@ -4,11 +4,16 @@
 #include <string.h>
 
 #define IDLE 0
-#define SEND_ALARM 1
-#define ALARM_SENT 2
-#define SEND_CLEAR 3
+#define DEBOUNCE_ALARM 1
+#define SEND_ALARM 2
+#define ALARM_SENT 3
+#define SEND_CLEAR 4
+
+#define HOLD_DOWN 2500
+
 
 volatile int state = IDLE;
+volatile long timer = 0;
 
 int main(void) {
 
@@ -28,6 +33,16 @@ int main(void) {
           switch(state){
               case IDLE:
 
+              break;
+              case DEBOUNCE_ALARM:
+                  if(TimeSinceBoot() >= timer){
+                      if(!(P2IN & BIT3)){
+                          state = SEND_ALARM;
+                      }
+                      else{
+                          state = IDLE;
+                      }
+                  }
               break;
               case SEND_ALARM:
                   if(SendData("FA|1") == 0){
@@ -55,7 +70,8 @@ int main(void) {
 void __attribute__((interrupt(PORT2_VECTOR))) Port_2(void)
 {
    if(state == IDLE){
-       state = SEND_ALARM;
+       timer = TimeSinceBoot() + HOLD_DOWN;
+       state = DEBOUNCE_ALARM;
        P2IES &= ~ BIT3; //set to rising edge trigger
    }
    else if(state == ALARM_SENT){

@@ -77,7 +77,7 @@ int main(void) {
         if(TimeSinceBoot() >= nextSample){
             if(sampleIndex < 10){
                 float tmpVar = rawTmp;
-                tmpVar *= 3.55;
+                tmpVar *= 3.32;
                 tmpVar -= 500;
                 tmpVar /= 10;
                 samples[sampleIndex] = (int)tmpVar;
