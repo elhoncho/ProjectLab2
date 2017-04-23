@@ -13,7 +13,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     """Video streaming home page."""
-    return render_template('Video Monitoring .html')
+    return render_template('Video Monitoring.html')
 
 
 def gen(camera):
@@ -32,4 +32,4 @@ def video_feed():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=4000, debug=True, threaded=True)
