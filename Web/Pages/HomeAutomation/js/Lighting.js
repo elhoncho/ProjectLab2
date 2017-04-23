@@ -32,7 +32,7 @@ $(document).ready(function() {
     	    slide: function(event, ui){
                 sliderUpdate = true;
                 if(Date.now() - lastTxTime > txDelay){
-                    socket.emit('Lighting', "LI|"+ui.value);
+                    socket.emit('Lighting', "LI|"+(65-ui.value));
                     lastTxTime = Date.now();
                     sliderUpdate = false;
                 }
