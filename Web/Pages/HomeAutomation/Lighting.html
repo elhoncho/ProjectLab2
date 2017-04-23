@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="css/lighting.css">
+
 <header class="bgimage">
 	<div class="container">
 	</div>
@@ -6,29 +8,27 @@
 <div class="container">
 
 	<div class="row top-buffer">
-		<div class="col-md-4">
+		<div class="col-xs-2">
 		</div>
-		<div class="col-md-4">
+		<div class="col-xs-8">
 			<div id="slider"></div>
-			
 		</div>
-		<div class="col-md-4">
+		<div class="col-xs-2">
 		</div>
 	</div>
 
 	<div class="row">
-		<div class="col-md-4">
+		<div class="col-xs-12 col-sm-4 col-sm-push-8 bottom-buffer">
+			<img id="high" class="center-block no-zoom" src="images/bright.png">
 		</div>
-		<div class="col-md-4">
-			<div id="slider"></div>
-			<img id="low" class="center-block no-zoom" src="images/cooling.png">
-			<img id="high" class="center-block no-zoom" src="images/heating.png">
+		<div class="col-xs-12 col-sm-4 col-sm-pull-4 bottom-buffer">
+			<img id="low" class="center-block no-zoom" src="images/dim.png">
 		</div>
-		<div class="col-md-4">
+		
+		<div class="col-xs-12 col-sm-4 col-sm-pull-4 bottom-buffer">
+			<img id="off" class="center-block no-zoom" src="images/off.png">
 		</div>
 	</div>
-
 </div>
 
 <script src="js/Lighting.js"></script>
-<link rel="stylesheet" href="css/lighting.css">

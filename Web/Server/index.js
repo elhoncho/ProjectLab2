@@ -32,6 +32,8 @@ io.on('connection', function(socket){
 	
 	socket.on('HVAC', function(msg){
     	console.log('message: ' + msg);
+
+      //Send to the MSP's
     	clients.forEach(function (client) {
       		client.write(msg);
     	});
@@ -49,23 +51,21 @@ io.on('connection', function(socket){
     	console.log('message: ' + msg);
     	clients.forEach(function (client) {
       		client.write(msg);
-	});
+	     });
 	});
 	
 	socket.on('Video', function(msg){
 		console.log('message: ' + msg);
 		clients.forEach(function (client) {
       		client.write(msg);
-	});
+	   });
 	});
 })
 
 
 
 // Start a TCP Server
-net.createServer(function (socket) {
-
-  
+net.createServer(function (socket) {  
   // Identify this client
   socket.name = socket.remoteAddress + ":" + socket.remotePort 
 
@@ -79,8 +79,30 @@ net.createServer(function (socket) {
 
   // Handle incoming messages from clients.
   socket.on('data', function (data) {
-    console.log(data.toString());
-    //broadcast(socket.name + "> " + data, socket);
+    inData = data.toString();
+    console.log(inData);
+    
+    if(inData.startsWith("TM")){
+      io.sockets.emit('Temp', inData.slice(3));
+    }
+    else if(inData.startsWith("FA")){
+      io.sockets.emit('FireAlarm', inData.slice(3));
+    }
+    else if(inData.startsWith("DB")){
+      io.sockets.emit('DoorBell', inData.slice(3));
+    }
+    else if(inData.startsWith("MD")){
+      io.sockets.emit('Motion', inData.slice(3));
+    }
+    else if(inData.startsWith("AC")){
+      io.sockets.emit('HVAC', inData.slice(3));
+    }
+    else if(inData.startsWith("AP")){
+      io.sockets.emit('Appliance', inData.slice(3));
+    }
+    else if(inData.startsWith("LI")){
+      io.sockets.emit('Lighting', inData.slice(3));
+    }
   });
 
   // Remove the client from the list when it leaves

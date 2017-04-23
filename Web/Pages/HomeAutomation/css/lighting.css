@@ -6,6 +6,10 @@
 }
 
 .top-buffer { 
-	margin-top:20px;
-	margin-bottom:20px;
+	margin-top:70px;
+	margin-bottom:70px;
+ }
+
+ .bottom-buffer { 
+	padding-bottom:40px;
  }

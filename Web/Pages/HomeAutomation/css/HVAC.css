@@ -1,15 +1,7 @@
-.row {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display:         flex;
-  flex-wrap: wrap;
-}
-.row > [class*='col-'] {
-  display: flex;
-  flex-direction: column;
+.pad-bottom{
+	padding-bottom: 40px;
 }
 
-.pad-top{
-	padding-top: 40px;
+.thermostat{
+	font-size: 100pt;
 }

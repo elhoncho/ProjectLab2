@@ -5,7 +5,15 @@ $(document).ready(function() {
     var txDelay = 250;
     var sliderUpdate = false;
 
+    $("#off").click(function(){
+        if(Date.now() - lastTxTime > txDelay){
+            socket.emit('Lighting', "LI|OFF");
+            lastTxTime = Date.now();
+        }
+    });
+
     $("#low").click(function(){
+        $('#slider').slider('value', 0);
 	   if(Date.now() - lastTxTime > txDelay){
             socket.emit('Lighting', "LI|65");
             lastTxTime = Date.now();
@@ -13,6 +21,7 @@ $(document).ready(function() {
     });
 
     $("#high").click(function(){
+        $('#slider').slider('value', 65);
         if(Date.now() - lastTxTime > txDelay){
             socket.emit('Lighting', "LI|0");
             lastTxTime = Date.now();
@@ -44,7 +53,7 @@ $(document).ready(function() {
 
     window.setInterval(function(){
         if(sliderUpdate){
-            socket.emit('Lighting', "LI|"+$("#slider").slider("value"));
+            socket.emit('Lighting', "LI|"+65-$("#slider").slider("value"));
             lastTxTime = Date.now();
             sliderUpdate = false;
         }
