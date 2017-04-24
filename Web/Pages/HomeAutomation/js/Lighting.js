@@ -1,9 +1,18 @@
 $(document).ready(function() {
 	var socket = io();
-	var appliance = "0";
     var lastTxTime = 0;
     var txDelay = 250;
     var sliderUpdate = false;
+
+    $('#slider').slider({value:65-lightingLvl});
+
+    socket.on('Lighting', function(msg){
+        
+    });
+
+    socket.on('LightingLvl', function(msg){
+        $('#slider').slider('value', 65-msg);
+    });
 
     $("#off").click(function(){
         if(Date.now() - lastTxTime > txDelay){
@@ -13,7 +22,6 @@ $(document).ready(function() {
     });
 
     $("#low").click(function(){
-        $('#slider').slider('value', 0);
 	   if(Date.now() - lastTxTime > txDelay){
             socket.emit('Lighting', "LI|65");
             lastTxTime = Date.now();
@@ -21,7 +29,6 @@ $(document).ready(function() {
     });
 
     $("#high").click(function(){
-        $('#slider').slider('value', 65);
         if(Date.now() - lastTxTime > txDelay){
             socket.emit('Lighting', "LI|0");
             lastTxTime = Date.now();

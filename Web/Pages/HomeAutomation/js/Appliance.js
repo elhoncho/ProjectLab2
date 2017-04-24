@@ -1,6 +1,5 @@
 $(document).ready(function() {
 	var socket = io();
-	var appliance = "0";
 
     if(appliance == "0"){
         $('#appliance').attr('src','images/fanDim.png');
@@ -9,16 +8,21 @@ $(document).ready(function() {
         $('#appliance').attr('src','images/fan.png');
     }
 
+    socket.on('Appliance', function(msg){
+        if(msg.charAt(0) == "0"){
+            $('#appliance').attr('src','images/fanDim.png');
+        }
+        else{
+            $('#appliance').attr('src','images/fan.png');
+        }
+    });
+
     $("#appliance").click(function(){
     	if(appliance == "0"){
-    		appliance = "1";
-            $('#appliance').attr('src','images/fan.png');
-    		socket.emit('Appliance', "AP|"+appliance);
+    		socket.emit('Appliance', "AP|"+"1");
     	}
     	else{
-    		appliance = "0";
-            $('#appliance').attr('src','images/fanDim.png');
-    		socket.emit('Appliance', "AP|"+appliance);
+    		socket.emit('Appliance', "AP|"+"0");
     	}
     }); 
 

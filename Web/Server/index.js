@@ -5,6 +5,21 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var net = require('net');
 
+var appliance = "0";
+
+var temperature = "70";
+var heating = "0";
+var cooling = "0";
+var fan = "0";
+
+var lightingLvl = 65;
+var lighting = false;
+
+var fireAlarm = 0;
+var doorBell = 0;
+var motionDetector = 0;
+
+
 // Keep track of the connected clients
 var clients = [];
 var hvacMsg = "";
@@ -29,6 +44,22 @@ http.listen(3000, function(){
 
 io.on('connection', function(socket){
 	console.log('a user connected');	
+  socket.emit('HVAC', heating+"|"+cooling+"|"+fan);
+  socket.emit('FireAlarm', fireAlarm);
+  socket.emit('DoorBell', doorBell);
+  socket.emit('Motion', motionDetector);
+  socket.emit('Appliance', appliance);
+  
+  if(lighting == true){
+    socket.emit('Lighting', "ON");
+  }
+  else{
+    socket.emit('Lighting', "OFF");
+  }
+  
+  socket.emit('LightingLvl', lightingLvl);
+
+
 	
 	socket.on('HVAC', function(msg){
     	console.log('message: ' + msg);
@@ -53,6 +84,13 @@ io.on('connection', function(socket){
       		client.write(msg);
 	     });
 	});
+
+  socket.on('LightingLvl', function(msg){
+      console.log('message: ' + msg);
+      clients.forEach(function (client) {
+          client.write(msg);
+       });
+  });
 	
 	socket.on('Video', function(msg){
 		console.log('message: ' + msg);
@@ -83,25 +121,43 @@ net.createServer(function (socket) {
     console.log(inData);
     
     if(inData.startsWith("TM")){
-      io.sockets.emit('Temp', inData.slice(3));
+      temperature = inData.charAt(3);
+      io.sockets.emit('Temp', temperature);
     }
     else if(inData.startsWith("FA")){
-      io.sockets.emit('FireAlarm', inData.slice(3));
+      fireAlarm = inData.charAt(3);
+      io.sockets.emit('FireAlarm', fireAlarm);
     }
     else if(inData.startsWith("DB")){
-      io.sockets.emit('DoorBell', inData.slice(3));
+      doorBell = inData.charAt(3);
+      io.sockets.emit('DoorBell', doorBell);
     }
     else if(inData.startsWith("MD")){
-      io.sockets.emit('Motion', inData.slice(3));
+      motionDetector = inData.charAt(3);
+      io.sockets.emit('Motion', motionDetector);
     }
     else if(inData.startsWith("AC")){
-      io.sockets.emit('HVAC', inData.slice(3));
+      heating = inData.charAt(3);
+      cooling = inData.charAt(5);
+      fan = inData.charAt(7);
+
+      io.sockets.emit('HVAC', heating+"|"+cooling+"|"+fan);
     }
     else if(inData.startsWith("AP")){
-      io.sockets.emit('Appliance', inData.slice(3));
+      appliance = inData.charAt(3);
+      io.sockets.emit('Appliance', appliance);
     }
     else if(inData.startsWith("LI")){
-      io.sockets.emit('Lighting', inData.slice(3));
+      if(inData.slice(3).trim() == "OFF"){
+        lighting = false;
+        io.sockets.emit('Lighting', "OFF");
+      }
+      else{
+        lightingLvl = parseInt(inData.slice(3),10);
+        lighting = true;
+        io.sockets.emit('Lighting', "ON");
+        io.sockets.emit('LightingLvl', lightingLvl);
+      }
     }
   });
 
