@@ -1,13 +1,8 @@
 $(document).ready(function() {
 	var socket = io();
-    var lastTxTime = 0;
-    var txDelay = 250;
-    var sliderUpdate = false;
 
     $('#slider').slider({value:65-lightingLvl});
-
-    socket.on('Lighting', function(msg){
-        
+        socket.on('Lighting', function(msg){
     });
 
     socket.on('LightingLvl', function(msg){
@@ -15,25 +10,15 @@ $(document).ready(function() {
     });
 
     $("#off").click(function(){
-        if(Date.now() - lastTxTime > txDelay){
-            socket.emit('Lighting', "LI|OFF");
-            lastTxTime = Date.now();
-        }
+        socket.emit('Lighting', "LI|OFF");
     });
 
     $("#low").click(function(){
-	   if(Date.now() - lastTxTime > txDelay){
-            socket.emit('Lighting', "LI|65");
-            lastTxTime = Date.now();
-        }
+        socket.emit('Lighting', "LI|65");
     });
 
     $("#high").click(function(){
-        if(Date.now() - lastTxTime > txDelay){
-            socket.emit('Lighting', "LI|0");
-            lastTxTime = Date.now();
-        }
-	
+        socket.emit('Lighting', "LI|0");
     }); 
 
     $('.no-zoom').bind('touchend', function(e) {
@@ -45,26 +30,11 @@ $(document).ready(function() {
         $("#slider").slider({
     	    min: 0,
     	    max: 65,
-    	    slide: function(event, ui){
-                sliderUpdate = true;
-                if(Date.now() - lastTxTime > txDelay){
+    	    change: function(event, ui){
+                if(event.originalEvent){
                     socket.emit('Lighting', "LI|"+(65-ui.value));
-                    lastTxTime = Date.now();
-                    sliderUpdate = false;
                 }
             }   
 	   });
     });
-
-
-
-    window.setInterval(function(){
-        if(sliderUpdate){
-            socket.emit('Lighting', "LI|"+65-$("#slider").slider("value"));
-            lastTxTime = Date.now();
-            sliderUpdate = false;
-        }
-    }, txDelay);
-
-
 });

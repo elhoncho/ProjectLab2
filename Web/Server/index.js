@@ -15,11 +15,6 @@ var fan = "0";
 var lightingLvl = 65;
 var lighting = false;
 
-var fireAlarm = 0;
-var doorBell = 0;
-var motionDetector = 0;
-
-
 // Keep track of the connected clients
 var clients = [];
 var hvacMsg = "";
@@ -45,10 +40,8 @@ http.listen(3000, function(){
 io.on('connection', function(socket){
 	console.log('a user connected');	
   socket.emit('HVAC', heating+"|"+cooling+"|"+fan);
-  socket.emit('FireAlarm', fireAlarm);
-  socket.emit('DoorBell', doorBell);
-  socket.emit('Motion', motionDetector);
   socket.emit('Appliance', appliance);
+  socket.emit('Temp', temperature);
   
   if(lighting == true){
     socket.emit('Lighting', "ON");
@@ -121,20 +114,17 @@ net.createServer(function (socket) {
     console.log(inData);
     
     if(inData.startsWith("TM")){
-      temperature = inData.charAt(3);
+      temperature = inData.slice(3);
       io.sockets.emit('Temp', temperature);
     }
     else if(inData.startsWith("FA")){
-      fireAlarm = inData.charAt(3);
-      io.sockets.emit('FireAlarm', fireAlarm);
+      io.sockets.emit('FireAlarm', inData.charAt(3));
     }
     else if(inData.startsWith("DB")){
-      doorBell = inData.charAt(3);
-      io.sockets.emit('DoorBell', doorBell);
+      io.sockets.emit('Doorbell', inData.charAt(3));
     }
     else if(inData.startsWith("MD")){
-      motionDetector = inData.charAt(3);
-      io.sockets.emit('Motion', motionDetector);
+      io.sockets.emit('Motion', inData.charAt(3));
     }
     else if(inData.startsWith("AC")){
       heating = inData.charAt(3);

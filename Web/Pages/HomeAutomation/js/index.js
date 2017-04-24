@@ -36,6 +36,77 @@ $(document).ready(function() {
         $('.navbar-toggle').click()
     });
 
+    socket.on('FireAlarm', function(msg){
+        if(msg.charAt(0) == "1"){
+            var d = new Date();
+            var hours = d.getHours();
+            var postfix = "AM";
+            
+            if(hours > 12){
+                hours = hours - 12;
+                postfix = "PM";
+            }
+            if(hours == 12){
+                postfix = "PM";
+            }
+
+            $("#alerts").append(
+                    "<div class=\"alert alert-danger alert-dismissable\">\
+                    <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\">&times;</a>\
+                    <strong>Fire Detected!</strong> A fire was detected at "+hours+":"+d.getMinutes()+" "+postfix+"\
+                    </div>"
+            );  
+        }
+    });
+
+    socket.on('Doorbell', function(msg){
+        if(msg.charAt(0) == "1"){
+
+            var d = new Date();
+            var hours = d.getHours();
+            var postfix = "AM";
+            
+            if(hours > 12){
+                hours = hours - 12;
+                postfix = "PM";
+            }
+            if(hours == 12){
+                postfix = "PM";
+            }
+
+            $("#alerts").append(
+                    "<div class=\"alert alert-info alert-dismissable\">\
+                    <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\">&times;</a>\
+                    <strong>Ding Dong!</strong> Someone rang the doorbell at "+hours+":"+d.getMinutes()+" "+postfix+"\
+                    </div>"
+            );  
+        }
+    });
+
+    socket.on('Motion', function(msg){
+        if(msg.charAt(0) == "1"){
+            
+            var d = new Date();
+            var hours = d.getHours();
+            var postfix = "AM";
+            
+            if(hours > 12){
+                hours = hours - 12;
+                postfix = "PM";
+            }
+            if(hours == 12){
+                postfix = "PM";
+            }
+
+            $("#alerts").append(
+                    "<div class=\"alert alert-warning alert-dismissable\">\
+                    <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\">&times;</a>\
+                    <strong>Whats that!</strong> Motion was detected at "+hours+":"+d.getMinutes()+" "+postfix+"\
+                    </div>"
+            );  
+        }
+    });
+
     socket.on('Appliance', function(msg){
         if(msg.charAt(0) == "0"){
             appliance = "0";
