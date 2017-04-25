@@ -29,14 +29,21 @@
 <body class="container">
   <h1 class="text-center">Video Monitoring
   </h1>
- 
-  <hr>
- 
-  <div class="row">
-    <img src="{{ url_for('video_feed') }}">
-  </div>
- 
 </body>
+
+<div class="container">
+	<div class="row top-buffer">
+		<div class="col-md-4">	
+		</div>
+	
+		<div class="col-md-4">
+			<img class="center-block no-zoom" src="{{ url_for('video_feed') }}">
+		</div>
+	
+		<div class="col-md-4">	
+		</div>
+	</div>
+</div>
  
 </html><header class="bgimage">
 	<div class="container">
