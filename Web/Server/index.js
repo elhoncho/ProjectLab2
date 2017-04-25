@@ -14,7 +14,8 @@ var fan = "0";
 var setTemp = "30";
 
 var hvacControl = "AUTO";
-var hvacMode = "OFF";
+var hvacMode = "COOLING";
+var hvacSystem = "OFF";
 var hvacFanMode = "AUTO";
 
 var lightingLvl = 65;
@@ -51,6 +52,7 @@ io.on('connection', function(socket){
   socket.emit('Temp', temperature);
   socket.emit('hvacControl', hvacControl);
   socket.emit('hvacMode', hvacMode);
+  socket.emit('hvacSystem', hvacSystem);
   socket.emit('hvacFanMode', hvacFanMode);
   socket.emit('setTemp', setTemp);
   
@@ -79,6 +81,12 @@ io.on('connection', function(socket){
     hvacMode = msg;
     console.log('hvacMode: ' + hvacMode);
     io.sockets.emit('hvacMode', hvacMode);
+  });
+
+  socket.on('hvacSystem', function(msg){
+    hvacSystem = msg;
+    console.log('hvacSystem: ' + hvacSystem);
+    io.sockets.emit('hvacSystem', hvacSystem);
   });
 
   socket.on('hvacFanMode', function(msg){

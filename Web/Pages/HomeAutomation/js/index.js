@@ -10,8 +10,9 @@ var lightingLvl = 65;
 var lighting = false;
 
 var hvacControl = "AUTO";
-var hvacMode = "OFF";
+var hvacMode = "COOLING";
 var hvacFanMode = "AUTO";
+var hvacSystem = "OFF";
 
 
 
@@ -173,6 +174,11 @@ $(document).ready(function() {
     socket.on('hvacMode', function(msg){
         hvacMode = msg;
         console.log('hvacMode: ' + hvacMode);
+    });
+
+    socket.on('hvacSystem', function(msg){
+        hvacSystem = msg;
+        console.log('hvacSystem: ' + hvacSystem);
     });
 
     socket.on('hvacFanMode', function(msg){
