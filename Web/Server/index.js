@@ -11,6 +11,11 @@ var temperature = "70";
 var heating = "0";
 var cooling = "0";
 var fan = "0";
+var setTemp = "30";
+
+var hvacControl = "AUTO";
+var hvacMode = "OFF";
+var hvacFanMode = "AUTO";
 
 var lightingLvl = 65;
 var lighting = false;
@@ -38,10 +43,16 @@ http.listen(3000, function(){
 });
 
 io.on('connection', function(socket){
-	console.log('a user connected');	
+	console.log('a user connected');
+
+  //Sync state of newly connected client
   socket.emit('HVAC', heating+"|"+cooling+"|"+fan);
   socket.emit('Appliance', appliance);
   socket.emit('Temp', temperature);
+  socket.emit('hvacControl', hvacControl);
+  socket.emit('hvacMode', hvacMode);
+  socket.emit('hvacFanMode', hvacFanMode);
+  socket.emit('setTemp', setTemp);
   
   if(lighting == true){
     socket.emit('Lighting', "ON");
@@ -51,42 +62,64 @@ io.on('connection', function(socket){
   }
   
   socket.emit('LightingLvl', lightingLvl);
+  
+  socket.on('setTemp', function(msg){
+    setTemp = msg;
+    console.log('setTemp: ' + hvacControl);
+    io.sockets.emit('setTemp', setTemp);
+  });
 
+  socket.on('hvacControl', function(msg){
+    hvacControl = msg;
+    console.log('hvacControl: ' + hvacControl);
+    io.sockets.emit('hvacControl', hvacControl);
+  });
 
+  socket.on('hvacMode', function(msg){
+    hvacMode = msg;
+    console.log('hvacMode: ' + hvacMode);
+    io.sockets.emit('hvacMode', hvacMode);
+  });
+
+  socket.on('hvacFanMode', function(msg){
+    hvacFanMode = msg;
+    console.log('hvacFanMode: ' + hvacFanMode);
+    io.sockets.emit('hvacFanMode', hvacFanMode);
+  });
 	
 	socket.on('HVAC', function(msg){
-    	console.log('message: ' + msg);
+  	console.log('HVAC: ' + msg);
 
-      //Send to the MSP's
-    	clients.forEach(function (client) {
-      		client.write(msg);
-    	});
+    //Send to the MSP's
+  	clients.forEach(function (client) {
+    		client.write(msg);
   	});
+	});
 
 	socket.on('Appliance', function(msg){
-    	console.log('message: ' + msg);
-    	clients.forEach(function (client) {
-      		client.write(msg);
-    	});
+  	console.log('Appliance: ' + msg);
+  	clients.forEach(function (client) {
+    		client.write(msg);
   	});
+	});
 
 
 	socket.on('Lighting', function(msg){
-    	console.log('message: ' + msg);
+    	console.log('Lighting: ' + msg);
     	clients.forEach(function (client) {
       		client.write(msg);
 	     });
 	});
 
   socket.on('LightingLvl', function(msg){
-      console.log('message: ' + msg);
+      console.log('LightingLvl: ' + msg);
       clients.forEach(function (client) {
           client.write(msg);
        });
   });
 	
 	socket.on('Video', function(msg){
-		console.log('message: ' + msg);
+		console.log('Video: ' + msg);
 		clients.forEach(function (client) {
       		client.write(msg);
 	   });

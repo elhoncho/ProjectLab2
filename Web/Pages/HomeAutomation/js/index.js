@@ -4,9 +4,14 @@ var temperature = "70";
 var heating = "0";
 var cooling = "0";
 var fan = "0";
+var setTemp = "30";
 
 var lightingLvl = 65;
 var lighting = false;
+
+var hvacControl = "AUTO";
+var hvacMode = "OFF";
+var hvacFanMode = "AUTO";
 
 
 
@@ -34,6 +39,10 @@ $(document).ready(function() {
 
     $('.nav a').on('click', function(){
         $('.navbar-toggle').click()
+    });
+
+    socket.on('setTemp', function(msg){
+        setTemp = msg;
     });
 
     socket.on('FireAlarm', function(msg){
@@ -154,5 +163,20 @@ $(document).ready(function() {
 
     socket.on('LightingLvl', function(msg){
         lightingLvl = parseInt(msg,10);
+    });
+
+    socket.on('hvacControl', function(msg){
+        hvacControl = msg;
+        console.log('hvacControl: ' + hvacControl);
+    });
+
+    socket.on('hvacMode', function(msg){
+        hvacMode = msg;
+        console.log('hvacMode: ' + hvacMode);
+    });
+
+    socket.on('hvacFanMode', function(msg){
+        hvacFanMode = msg;
+        console.log('hvacFanMode: ' + hvacFanMode);
     });
 });

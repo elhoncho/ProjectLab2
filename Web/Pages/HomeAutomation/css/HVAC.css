@@ -5,3 +5,19 @@
 .thermostat{
 	font-size: 100pt;
 }
+
+.topBuffer{
+	margin-top: 50px;
+}
+.bottomBuffer{
+	margin-bottom: 10px;
+}
+
+.downButton{
+	margin-top: 60px;
+	margin-left: 10px;
+}
+
+.upButton{
+	margin-left: 10px;
+}
