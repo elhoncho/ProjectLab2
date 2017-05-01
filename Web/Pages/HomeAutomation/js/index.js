@@ -1,3 +1,6 @@
+const DISPLAY_TEMP = 0;
+const DISPLAY_SET_TEMP = 1;
+
 var appliance = "0";
 
 var temperature = "70";

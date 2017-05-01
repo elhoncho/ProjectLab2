@@ -10,14 +10,15 @@
 	margin-top: 50px;
 }
 .bottomBuffer{
-	margin-bottom: 10px;
+	margin-bottom: 30px;
 }
 
 .downButton{
 	margin-top: 60px;
-	margin-left: 10px;
+	margin-left: 20px;
 }
 
 .upButton{
-	margin-left: 10px;
+	margin-left: 20px;
+	margin-top: 20px;
 }

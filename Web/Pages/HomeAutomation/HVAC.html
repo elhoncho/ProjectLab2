@@ -4,11 +4,19 @@
 <div class="container">
 	<div class="row">
 		
-		<div class="col-xs-5"></div>
+		<div class="visible-sm col-sm-7"></div>
+		<div  class="col-xs-12 col-sm-5 text-center">
+			<div class="bottomBuffer">
+				<input type="checkbox" name="hvacSystem" id="hvacSystem" checked>
+				<input type="checkbox" data-on-text="Manual" data-off-text="Auto" name="hvacControl" id="hvacControl" checked>
+			</div>	
+		</div>
 
-		<div id="temperature" class="col-xs-2 text-center thermostat">70&#176</div>
+		<div class="col-xs-4 col-sm-4"></div>
 
-		<div class="col-xs-1">
+		<div id="temperature" class="col-xs-4 col-sm-4 text-center thermostat col-xs-pull-1 col-sm-pull-0">70&#176</div>
+
+		<div class="col-xs-4 col-sm-4 col-xs-push-1">
 			<button type="button" id="tempUp" class="btn btn-default btn-lg upButton">
 				<span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span>
 			</button>
@@ -17,18 +25,7 @@
 				<span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span>
 			</button>
 		</div>
-		
-		<div class="col-xs-2"></div>
 
-		<div  class="col-xs-2 topBuffer">
-			<div class="bottomBuffer">
-				<input type="checkbox" name="hvacSystem" id="hvacSystem" checked>
-			</div>
-
-			<div>
-			<input type="checkbox" data-on-text="Manual" data-off-text="Auto" name="hvacControl" id="hvacControl" checked>
-			</div>	
-		</div>
 	</div>
 
 	<div class="row">

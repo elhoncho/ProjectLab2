@@ -1,5 +1,4 @@
-const DISPLAY_TEMP = 0;
-const DISPLAY_SET_TEMP = 1;
+
 var display = DISPLAY_TEMP;
 var displayTempTimer;
 var displayTime = 3000;
@@ -162,7 +161,6 @@ $(document).ready(function() {
     }); 
 
     $("#fan").click(function(){
-        console.log("Clicked the fan");
         if(hvacSystem == "ON"){
             if(hvacControl == "MANUAL"){
                 if(fan == "0"){
