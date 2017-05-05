@@ -296,7 +296,6 @@ function SetAuto(){
 }
 
 function UpdateButtons(){
-    hvacControl
     $("[name='hvacSystem']").bootstrapSwitch("_width");
     $("[name='hvacControl']").bootstrapSwitch("_width");
 }
