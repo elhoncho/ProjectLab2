@@ -4,9 +4,9 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var net = require('net');
 
-var applianceInit = false;
-var hvacInit = false;
-var lightingInit = false;
+var applianceInit = 0;
+var hvacInit = 0;
+var lightingInit = 0;
 
 
 var appliance = "0";
@@ -171,7 +171,7 @@ net.createServer(function (socket) {
       io.sockets.emit('Motion', inData.charAt(3));
     }
     else if(inData.startsWith("AC")){
-      hvacInit = true;
+      hvacInit = 1;
       heating = inData.charAt(3);
       cooling = inData.charAt(5);
       fan = inData.charAt(7);
@@ -179,12 +179,12 @@ net.createServer(function (socket) {
       io.sockets.emit('HVAC', heating+"|"+cooling+"|"+fan);
     }
     else if(inData.startsWith("AP")){
-      applianceInit == true;
+      applianceInit == 1;
       appliance = inData.charAt(3);
       io.sockets.emit('Appliance', appliance);
     }
     else if(inData.startsWith("LI")){
-      lightingInit == true;
+      lightingInit == 1;
       if(inData.slice(3).trim() == "OFF"){
         lighting = false;
         io.sockets.emit('Lighting', "OFF");
@@ -215,7 +215,7 @@ setInterval(AutoControl, 1000);
 var initInterval = setInterval(DeviceInit, 500);
 
 function DeviceInit(){
-  if(hvacInit && lightingInit && applianceInit){
+  if(hvacInit == 1 && lightingInit == 1 && applianceInit == 1){
     clearInterval(initInterval);
   }
   else{
