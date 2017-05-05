@@ -46,7 +46,7 @@ int main(void) {
 
                 SendData(tmpStr);
             }
-            if(strncmp(rxData, "AC|", 3) == 0){
+            else if(strncmp(rxData, "AC|", 3) == 0){
                 if(rxData[3] == '0'){
                     heating = rxData[3];
                     P2OUT &= ~BIT3;
