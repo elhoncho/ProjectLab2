@@ -225,13 +225,13 @@ function AutoControl(){
       }
       else{
         if(hvacFanMode == "ON"){
-          if(fan != "1" || heating != "0" || cooling != "0"){
+          if(fan == "0" || heating == "1" || cooling == "1"){
             clients.forEach(function (client) {
                   client.write("AC|0|0|1");
             });
           }
         }
-        else if(heating != "0" || cooling != "0" || fan != "0"){
+        else if(heating == "1" || cooling == "1" || fan == "1"){
           clients.forEach(function (client) {
                 client.write("AC|0|0|0");
           });
@@ -248,13 +248,13 @@ function AutoControl(){
       }
       else{
         if(hvacFanMode == "ON"){
-          if(fan != "1" || heating != "0" || cooling != "0"){
+          if(fan == "0" || heating == "1" || cooling == "1"){
             clients.forEach(function (client) {
                   client.write("AC|0|0|1");
             });
           }
         }
-        else if(heating != "0" || cooling != "0" || fan != "0"){
+        else if(heating == "1" || cooling == "1" || fan == "1"){
           clients.forEach(function (client) {
                 client.write("AC|0|0|0");
           });
