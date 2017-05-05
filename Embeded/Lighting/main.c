@@ -34,7 +34,22 @@ int main(void) {
     while(1){
         WifiLoop();
         if(NewData() == 0){
-            if(strncmp(rxData, "LI|OFF", 6) == 0){
+            //Status Update
+            if(strncmp(rxData, "ST", 2) == 0){
+                char tmpStr[9] = "";
+
+                strcpy(tmpStr, "LI|");
+                if(delayTime > MAX_DELAY){
+                    strcat(tmpStr, "OFF");
+                }
+                else{
+                    char tmpNumStr[3] = "00";
+                    itoa(delayTime, tmpNumStr, 10);
+                    strcat(tmpStr, tmpNumStr);
+                }
+                SendData(tmpStr);
+            }
+            else if(strncmp(rxData, "LI|OFF", 6) == 0){
                 delayTime = MAX_DELAY*2;
             }
             else if(strncmp(rxData, "LI|", 3) == 0){

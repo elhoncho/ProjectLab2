@@ -4,6 +4,11 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var net = require('net');
 
+var applianceInit = "false";
+var hvacInit = "false";
+var lightingInit = "false";
+
+
 var appliance = "0";
 
 var temperature = "70";
@@ -166,6 +171,7 @@ net.createServer(function (socket) {
       io.sockets.emit('Motion', inData.charAt(3));
     }
     else if(inData.startsWith("AC")){
+      hvacInit = true;
       heating = inData.charAt(3);
       cooling = inData.charAt(5);
       fan = inData.charAt(7);
@@ -173,10 +179,12 @@ net.createServer(function (socket) {
       io.sockets.emit('HVAC', heating+"|"+cooling+"|"+fan);
     }
     else if(inData.startsWith("AP")){
+      applianceInit == true;
       appliance = inData.charAt(3);
       io.sockets.emit('Appliance', appliance);
     }
     else if(inData.startsWith("LI")){
+      lightingInit == true;
       if(inData.slice(3).trim() == "OFF"){
         lighting = false;
         io.sockets.emit('Lighting', "OFF");
@@ -204,6 +212,18 @@ net.createServer(function (socket) {
 }).listen(5000);
 
 setInterval(AutoControl, 1000);
+var initInterval = setInterval(DeviceInit, 500);
+
+function DeviceInit(){
+  if(hvacInit == false || lightingInit == false || applainceInit == false){
+    clients.forEach(function (client) {
+      client.write("ST");
+    });
+  }
+  else{
+    clearInterval(initInterval);
+  }
+}
 
 function AutoControl(){
   if(hvacSystem == "OFF"){
