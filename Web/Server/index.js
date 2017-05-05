@@ -215,7 +215,7 @@ setInterval(AutoControl, 1000);
 var initInterval = setInterval(DeviceInit, 500);
 
 function DeviceInit(){
-  if(hvacInit == false || lightingInit == false || applainceInit == false){
+  if(hvacInit == false || lightingInit == false || applianceInit == false){
     clients.forEach(function (client) {
       client.write("ST");
     });
