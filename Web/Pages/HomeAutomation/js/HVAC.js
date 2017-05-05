@@ -38,6 +38,7 @@ $(document).ready(function() {
     });
 
     socket.on('hvacSystem', function(msg){
+        UpdateButtons();
         if(msg == "ON"){
              $("[name='hvacSystem']").bootstrapSwitch('state', true);
 
@@ -292,4 +293,10 @@ function SetAuto(){
         $('#cooling').attr('src','images/coolingDim.png');
         $('#heating').attr('src','images/heatingDim.png');
     }
+}
+
+function UpdateButtons(){
+    hvacControl
+    $("[name='hvacSystem']").bootstrapSwitch("_width");
+    $("[name='hvacControl']").bootstrapSwitch("_width");
 }
