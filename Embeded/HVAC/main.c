@@ -37,6 +37,15 @@ int main(void) {
     while(1){
         WifiLoop();
         if(NewData() == 0){
+            //Status Update
+            if(strncmp(rxData, "ST", 2) == 0){
+                char tmpStr[9] = "AC|0|0|0";
+                tmpStr[3] = heating;
+                tmpStr[5] = cooling;
+                tmpStr[7] = fan;
+
+                SendData(tmpStr);
+            }
             if(strncmp(rxData, "AC|", 3) == 0){
                 if(rxData[3] == '0'){
                     heating = rxData[3];

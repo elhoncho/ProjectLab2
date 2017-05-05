@@ -143,10 +143,9 @@ net.createServer(function (socket) {
   // Put this new client in the list
   clients.push(socket);
 
-  // TODO: Turn this into a query for the state of the device
-  //socket.write("Welcome " + socket.name + "\n");
+  // Get state of newly connected device
+  socket.write("ST");
 
-  //broadcast(socket.name + " joined the chat\n", socket);
 
   // Handle incoming messages from clients.
   socket.on('data', function (data) {
