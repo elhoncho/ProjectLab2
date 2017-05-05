@@ -15,12 +15,11 @@
 
 volatile int state = 0;
 //max of 65
-int delayTime = 65;
+int delayTime = 180;
 int onTime = 10;
 volatile long triggerTime = 0;
 
 int main(void) {
-    long timer = 0;
 
       WifiSetup();
 
@@ -35,7 +34,10 @@ int main(void) {
     while(1){
         WifiLoop();
         if(NewData() == 0){
-            if(strncmp(rxData, "LI|", 3) == 0){
+            if(strncmp(rxData, "LI|OFF", 6) == 0){
+                delayTime = MAX_DELAY*2;
+            }
+            else if(strncmp(rxData, "LI|", 3) == 0){
                 char tmpStr[9] = "";
                 int tmpNum = 0;
                 strncpy(tmpStr, &rxData[3], 2);
