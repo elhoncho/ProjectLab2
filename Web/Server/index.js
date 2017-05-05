@@ -225,7 +225,7 @@ function AutoControl(){
       }
       else{
         if(hvacFanMode == "ON"){
-          if(fan == "0"){
+          if(fan != "1" || heating != "0" || cooling != "0"){
             clients.forEach(function (client) {
                   client.write("AC|0|0|1");
             });
@@ -248,7 +248,7 @@ function AutoControl(){
       }
       else{
         if(hvacFanMode == "ON"){
-          if(fan == "0"){
+          if(fan != "1" || heating != "0" || cooling != "0"){
             clients.forEach(function (client) {
                   client.write("AC|0|0|1");
             });
