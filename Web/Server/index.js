@@ -4,9 +4,9 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var net = require('net');
 
-var applianceInit = "false";
-var hvacInit = "false";
-var lightingInit = "false";
+var applianceInit = false;
+var hvacInit = false;
+var lightingInit = false;
 
 
 var appliance = "0";
