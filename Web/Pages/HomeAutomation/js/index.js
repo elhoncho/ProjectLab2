@@ -53,20 +53,29 @@ $(document).ready(function() {
         if(msg.charAt(0) == "1"){
             var d = new Date();
             var hours = d.getHours();
+            var minutes = d.getMinutes();
             var postfix = "AM";
             
             if(hours > 12){
                 hours = hours - 12;
+                hours = "0"+hours;
                 postfix = "PM";
             }
-            if(hours == 12){
+            else if(hours == 12){
                 postfix = "PM";
+            }
+            else if(hours == 0){
+                hours = 12;
+            }
+
+            if (minutes.toString().length == 1) {
+                minutes = "0" + minutes;
             }
 
             $("#alerts").append(
                     "<div class=\"alert alert-danger alert-dismissable\">\
                     <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\">&times;</a>\
-                    <strong>Fire Detected!</strong> A fire was detected at "+hours+":"+d.getMinutes()+" "+postfix+"\
+                    <strong>Fire Detected!</strong> A fire was detected at "+hours+":"+minutes+" "+postfix+"\
                     </div>"
             );  
         }
@@ -77,20 +86,29 @@ $(document).ready(function() {
 
             var d = new Date();
             var hours = d.getHours();
+            var minutes = d.getMinutes();
             var postfix = "AM";
             
             if(hours > 12){
                 hours = hours - 12;
+                hours = "0"+hours;
                 postfix = "PM";
             }
-            if(hours == 12){
+            else if(hours == 12){
                 postfix = "PM";
+            }
+            else if(hours == 0){
+                hours = 12;
+            }
+
+            if (minutes.toString().length == 1) {
+                minutes = "0" + minutes;
             }
 
             $("#alerts").append(
                     "<div class=\"alert alert-info alert-dismissable\">\
                     <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\">&times;</a>\
-                    <strong>Ding Dong!</strong> Someone rang the doorbell at "+hours+":"+d.getMinutes()+" "+postfix+"\
+                    <strong>Ding Dong!</strong> Someone rang the doorbell at "+hours+":"+minutes+" "+postfix+"\
                     </div>"
             );  
         }
@@ -101,20 +119,29 @@ $(document).ready(function() {
             
             var d = new Date();
             var hours = d.getHours();
+            var minutes = d.getMinutes();
             var postfix = "AM";
             
             if(hours > 12){
                 hours = hours - 12;
+                hours = "0"+hours;
                 postfix = "PM";
             }
-            if(hours == 12){
+            else if(hours == 12){
                 postfix = "PM";
+            }
+            else if(hours == 0){
+                hours = 12;
+            }
+
+            if (minutes.toString().length == 1) {
+                minutes = "0" + minutes;
             }
 
             $("#alerts").append(
                     "<div class=\"alert alert-warning alert-dismissable\">\
                     <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\">&times;</a>\
-                    <strong>Whats that!</strong> Motion was detected at "+hours+":"+d.getMinutes()+" "+postfix+"\
+                    <strong>Whats that!</strong> Motion was detected at "+hours+":"+minutes+" "+postfix+"\
                     </div>"
             );  
         }

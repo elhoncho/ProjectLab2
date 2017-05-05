@@ -76,7 +76,7 @@ $(document).ready(function() {
     $("#temperature").html(temperature+"&#176");
 
     socket.on('HVAC', function(msg){
-        if(hvacSystem == "ON" && hvacControl == "MANUAL"){
+        if(hvacControl == "MANUAL"){
             if(msg.charAt(0) == "0"){
                 $('#heating').attr('src','images/heatingDim.png');
             }

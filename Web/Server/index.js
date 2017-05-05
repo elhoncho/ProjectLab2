@@ -207,52 +207,57 @@ net.createServer(function (socket) {
 setInterval(AutoControl, 1000);
 
 function AutoControl(){
-  if(hvacControl == "AUTO"){
-    if(hvacSystem == "ON"){
-      if(hvacMode == "COOLING"){
-        if(temperature > setTemp){
-          if(cooling == "0"){
-            clients.forEach(function (client) {
-                  client.write("AC|0|1|1");
-            });
-          }
-        }
-        else{
-          if(hvacFanMode == "ON"){
-            if(fan == "0"){
-              clients.forEach(function (client) {
-                    client.write("AC|0|0|1");
-              });
-            }
-          }
-          else if(heating != "0" || cooling != "0" || fan != "0"){
-            clients.forEach(function (client) {
-                  client.write("AC|0|0|0");
-            });
-          }
+  if(hvacSystem == "OFF"){
+    if(heating != "0" || cooling != "0" || fan != "0"){
+      clients.forEach(function (client) {
+            client.write("AC|0|0|0");
+      });
+    }
+  }
+  else if(hvacControl == "AUTO"){
+    if(hvacMode == "COOLING"){
+      if(temperature > setTemp){
+        if(cooling == "0"){
+          clients.forEach(function (client) {
+                client.write("AC|0|1|1");
+          });
         }
       }
-      if(hvacMode == "HEATING"){
-        if(temperature < setTemp){
-          if(heating == "0"){
+      else{
+        if(hvacFanMode == "ON"){
+          if(fan == "0"){
             clients.forEach(function (client) {
-                  client.write("AC|1|0|1");
+                  client.write("AC|0|0|1");
             });
           }
         }
-        else{
-          if(hvacFanMode == "ON"){
-            if(fan == "0"){
-              clients.forEach(function (client) {
-                    client.write("AC|0|0|1");
-              });
-            }
-          }
-          else if(heating != "0" || cooling != "0" || fan != "0"){
+        else if(heating != "0" || cooling != "0" || fan != "0"){
+          clients.forEach(function (client) {
+                client.write("AC|0|0|0");
+          });
+        }
+      }
+    }
+    if(hvacMode == "HEATING"){
+      if(temperature < setTemp){
+        if(heating == "0"){
+          clients.forEach(function (client) {
+                client.write("AC|1|0|1");
+          });
+        }
+      }
+      else{
+        if(hvacFanMode == "ON"){
+          if(fan == "0"){
             clients.forEach(function (client) {
-                  client.write("AC|0|0|0");
+                  client.write("AC|0|0|1");
             });
           }
+        }
+        else if(heating != "0" || cooling != "0" || fan != "0"){
+          clients.forEach(function (client) {
+                client.write("AC|0|0|0");
+          });
         }
       }
     }
