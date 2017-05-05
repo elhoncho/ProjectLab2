@@ -3,7 +3,7 @@
 }
 
 .thermostat{
-	font-size: 100pt;
+	font-size: 80pt;
 }
 
 .topBuffer{
@@ -13,12 +13,6 @@
 	margin-bottom: 30px;
 }
 
-.downButton{
-	margin-top: 60px;
-	margin-left: 20px;
-}
-
-.upButton{
-	margin-left: 20px;
-	margin-top: 20px;
+.temp-buttons{
+	padding-top: 35px;
 }

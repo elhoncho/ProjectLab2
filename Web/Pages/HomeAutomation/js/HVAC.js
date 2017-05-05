@@ -105,8 +105,11 @@ $(document).ready(function() {
             if(msg == "AUTO"){
                 $('#fan').attr('src','images/fanAuto.png');
             }
-            else{
+            else if(msg == "ON"){
                 $('#fan').attr('src','images/fan.png');
+            }
+            else if(msg =="OFF"){
+              $('#fan').attr('src','images/fanDim.png');
             }
         }
     });
@@ -158,7 +161,7 @@ $(document).ready(function() {
                 }
             }
         }
-    }); 
+    });
 
     $("#fan").click(function(){
         if(hvacSystem == "ON"){
@@ -175,13 +178,13 @@ $(document).ready(function() {
                     console.log("Fan: ON");
                     socket.emit('hvacFanMode', "ON");
                 }
-                else{
+                else if(hvacFanMode == "ON"){
                     console.log("Fan: AUTO");
                     socket.emit('hvacFanMode', "AUTO");
                 }
             }
         }
-    });  
+    });
 
 
     $("#tempUp").click(function(){
@@ -228,7 +231,7 @@ $(document).ready(function() {
         }
     });
 
-    
+
 
     //Stop iPhone frpm zooming on doubble tap
     $('.no-zoom').bind('touchend', function(e) {

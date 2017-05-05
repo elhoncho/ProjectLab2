@@ -54,16 +54,16 @@ io.on('connection', function(socket){
   socket.emit('hvacSystem', hvacSystem);
   socket.emit('hvacFanMode', hvacFanMode);
   socket.emit('setTemp', setTemp);
-  
+
   if(lighting == true){
     socket.emit('Lighting', "ON");
   }
   else{
     socket.emit('Lighting', "OFF");
   }
-  
+
   socket.emit('LightingLvl', lightingLvl);
-  
+
   socket.on('setTemp', function(msg){
     setTemp = msg;
     console.log('setTemp: ' + hvacControl);
@@ -93,7 +93,7 @@ io.on('connection', function(socket){
     console.log('hvacFanMode: ' + hvacFanMode);
     io.sockets.emit('hvacFanMode', hvacFanMode);
   });
-	
+
 	socket.on('HVAC', function(msg){
   	console.log('HVAC: ' + msg);
 
@@ -124,7 +124,7 @@ io.on('connection', function(socket){
           client.write(msg);
        });
   });
-	
+
 	socket.on('Video', function(msg){
 		console.log('Video: ' + msg);
 		clients.forEach(function (client) {
@@ -136,23 +136,23 @@ io.on('connection', function(socket){
 
 
 // Start a TCP Server
-net.createServer(function (socket) {  
+net.createServer(function (socket) {
   // Identify this client
-  socket.name = socket.remoteAddress + ":" + socket.remotePort 
+  socket.name = socket.remoteAddress + ":" + socket.remotePort
 
   // Put this new client in the list
   clients.push(socket);
 
   // TODO: Turn this into a query for the state of the device
   //socket.write("Welcome " + socket.name + "\n");
-  
+
   //broadcast(socket.name + " joined the chat\n", socket);
 
   // Handle incoming messages from clients.
   socket.on('data', function (data) {
     inData = data.toString();
     console.log(inData);
-    
+
     if(inData.startsWith("TM")){
       temperature = inData.slice(3);
       io.sockets.emit('Temp', temperature);
@@ -202,6 +202,59 @@ net.createServer(function (socket) {
       clients.splice(clients.indexOf(socket), 1);
     }
   });
-
-
 }).listen(5000);
+
+setInterval(AutoControl, 1000);
+
+function AutoControl(){
+  if(hvacControl == "AUTO"){
+    if(hvacSystem == "ON"){
+      if(hvacMode == "COOLING"){
+        if(temperature > setTemp){
+          if(cooling == "0"){
+            clients.forEach(function (client) {
+                  client.write("AC|0|1|1");
+            });
+          }
+        }
+        else{
+          if(hvacFanMode == "ON"){
+            if(fan == "0"){
+              clients.forEach(function (client) {
+                    client.write("AC|0|0|1");
+              });
+            }
+          }
+          else if(heating != "0" || cooling != "0" || fan != "0"){
+            clients.forEach(function (client) {
+                  client.write("AC|0|0|0");
+            });
+          }
+        }
+      }
+      if(hvacMode == "HEATING"){
+        if(temperature < setTemp){
+          if(heating == "0"){
+            clients.forEach(function (client) {
+                  client.write("AC|1|0|1");
+            });
+          }
+        }
+        else{
+          if(hvacFanMode == "ON"){
+            if(fan == "0"){
+              clients.forEach(function (client) {
+                    client.write("AC|0|0|1");
+              });
+            }
+          }
+          else if(heating != "0" || cooling != "0" || fan != "0"){
+            clients.forEach(function (client) {
+                  client.write("AC|0|0|0");
+            });
+          }
+        }
+      }
+    }
+  }
+}
