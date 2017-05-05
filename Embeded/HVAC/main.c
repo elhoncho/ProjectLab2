@@ -37,7 +37,15 @@ int main(void) {
     while(1){
         WifiLoop();
         if(NewData() == 0){
-            if(strncmp(rxData, "AC|", 3) == 0){
+            if(strncmp(rxData, "ST", 2) == 0){
+                char tmpStr[9] = "AC|0|0|0";
+                tmpStr[3] = heating;
+                tmpStr[5] = cooling;
+                tmpStr[7] = fan;
+
+                SendData(tmpStr);
+            }
+            else if(strncmp(rxData, "AC|", 3) == 0){
                 if(rxData[3] == '0'){
                     heating = rxData[3];
                     P2OUT &= ~BIT3;

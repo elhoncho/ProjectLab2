@@ -18,7 +18,12 @@ int main(void) {
     while(1){
         WifiLoop();
         if(NewData() == 0){
-            if(strncmp(rxData, "AP|", 3) == 0){
+            if(strncmp(rxData, "ST", 2) == 0){
+                char tmpStr[9] = "AP|0";
+                tmpStr[3] = appliance;
+                SendData(tmpStr);
+            }
+            else if(strncmp(rxData, "AP|", 3) == 0){
                 if(rxData[3] == '0'){
                     appliance = rxData[3];
                     P2OUT &= !BIT3;
