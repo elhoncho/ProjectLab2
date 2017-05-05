@@ -179,12 +179,12 @@ net.createServer(function (socket) {
       io.sockets.emit('HVAC', heating+"|"+cooling+"|"+fan);
     }
     else if(inData.startsWith("AP")){
-      applianceInit == 1;
+      applianceInit = 1;
       appliance = inData.charAt(3);
       io.sockets.emit('Appliance', appliance);
     }
     else if(inData.startsWith("LI")){
-      lightingInit == 1;
+      lightingInit = 1;
       if(inData.slice(3).trim() == "OFF"){
         lighting = false;
         io.sockets.emit('Lighting', "OFF");
