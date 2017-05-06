@@ -15,7 +15,7 @@
 
 volatile int state = 0;
 //max of 65
-int delayTime = 65;
+int delayTime = 130;
 int onTime = 10;
 volatile long triggerTime = 0;
 
@@ -49,6 +49,11 @@ int main(void) {
                     strcpy(tmpStr, "LI|OFF");
                     SendData(tmpStr);
                 }
+            }
+            else if(strncmp(rxData, "LI|OFF", 6) == 0){
+                delayTime = MAX_DELAY*2;
+                char tmpStr[9] = "LI|OFF";
+                SendData(tmpStr);
             }
             else if(strncmp(rxData, "LI|", 3) == 0){
                 char tmpStr[9] = "";
